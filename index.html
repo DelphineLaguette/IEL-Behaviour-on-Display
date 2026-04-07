@@ -4,224 +4,1285 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Behaviours on Display - IBL Energy</title>
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=Permanent+Marker&display=swap" rel="stylesheet">
+<!-- Google Fonts: Permanent Marker for titles, DM Sans for app-like text -->
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Permanent+Marker&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f0f4f8; --surface: #ffffff; --border: #d0dae6;
-    --accent: #0F2C61; --accent2: #FF51A1; --text: #0F2C61; --muted: #53698c;
+    --bg: #f0f4f8;
+    --surface: #ffffff;
+    --surface2: #e8eef5;
+    --border: #d0dae6;
+    /* Company Colors */
+    --accent: #0F2C61; /* Updated Navy */
+    --accent2: #FF51A1; /* Pink */
+    --accent3: #00D0DA; /* Teal */
+    --accent4: #0891b2; /* Kept existing value for other accents */
+    /* Main text color, now uses the updated Navy */
+    --text: #0F2C61; 
+    --muted: #53698c; /* Adjusted muted color to complement new navy */
+    --danger: #dc2626;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); }
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    font-size: 15px;
+  }
   
-  /* --- LAYOUT --- */
+  /* Apply Permanent Marker to specified titles */
+  .auth-logo, .nav-logo, .page-header h2, .stat-value, .rank { 
+    font-family: 'Permanent Marker', cursive; 
+    font-weight: normal; /* Permanent Marker is typically one weight */
+  }
+  
+  /* Ensure h3, h4 and other elements use DM Sans for app-like feel */
+  h1, h2, h3, h4, .btn, .nav-tab, .team-tab, .stat-label, .lb-name, .pill, .form-group label, .avatar, .success-msg, .alert,
+  .user-list-item .uname, .card-type-list-item .ct-name {
+    font-family: 'DM Sans', sans-serif; /* Default to DM Sans */
+  }
+
+  h1, h2 { /* Specific font for main headers - overridden for H2 above */ }
+  h3 { font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  h4 { font-size: 16px; font-weight: 700; } /* Used for team grouping in Admin */
+  h5 { font-size: 14px; font-weight: 600; margin-bottom: 8px; color: var(--text); } /* Used for value grouping in Admin */
+
+
+  /* ── AUTH SCREEN ── */
+  #auth-screen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse at 30% 20%, #e2eaf5 0%, var(--bg) 60%);
+  }
+  .auth-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 48px 40px;
+    width: 100%;
+    max-width: 420px;
+    position: relative;
+    overflow: hidden;
+    display: flex; 
+    flex-direction: column; 
+    align-items: center; 
+  }
+  .auth-box::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 200px; height: 200px;
+    background: radial-gradient(circle, rgba(255,81,161,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .ibl-energy-main-logo {
+    max-width: 180px; 
+    height: auto;
+    margin-bottom: 10px; /* Reduced margin slightly to bring logo closer to title */
+  }
+  .auth-logo {
+    font-size: 28px; /* Slightly reduced font size for single line */
+    letter-spacing: 0.5px; /* Adjusted letter spacing for single line */
+    margin-bottom: 8px;
+    white-space: nowrap; /* Forces text to stay on a single line */
+  }
+  .auth-logo span { color: var(--accent2); }
+  .auth-sub { color: var(--muted); font-size: 14px; margin-bottom: 32px; text-align: center; }
+  .form-group { margin-bottom: 18px; width: 100%; } 
+  .form-group label { display: block; font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.8px; margin-bottom: 8px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    padding: 12px 16px;
+    font-family: 'DM Sans', sans-serif; 
+    font-size: 14px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--accent); }
+  .form-group select option { background: var(--surface2); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+    border: none; border-radius: 10px; cursor: pointer;
+    font-weight: 700; 
+    transition: all 0.2s; text-decoration: none;
+  }
+  .btn-primary {
+    background: var(--accent); color: #ffffff;
+    padding: 13px 24px; font-size: 14px; width: 100%;
+  }
+  .btn-primary:hover { background: #0A1F4C; transform: translateY(-1px); }
+  .btn-secondary {
+    background: var(--surface2); color: var(--text); border: 1px solid var(--border);
+    padding: 10px 18px; font-size: 13px;
+  }
+  .btn-secondary:hover { border-color: var(--accent2); color: var(--accent2); }
+  .btn-danger { background: var(--danger); color: #fff; padding: 8px 14px; font-size: 13px; }
+  .btn-danger:hover { background: #e86070; }
+  .btn-sm { padding: 7px 14px; font-size: 12px; }
+
+  /* ── APP SHELL ── */
   #app { display: none; min-height: 100vh; flex-direction: column; }
-  .topnav { display: flex; align-items: center; justify-content: space-between; padding: 0 32px; height: 64px; background: var(--surface); border-bottom: 1px solid var(--border); }
-  .main { flex: 1; padding: 32px; max-width: 1100px; margin: 0 auto; width: 100%; }
-  .view { display: none; } .view.active { display: block; }
+
+  /* ── TOP NAV ── */
+  .topnav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 32px;
+    height: 64px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .nav-logo { 
+    font-size: 22px; 
+    letter-spacing: 1px;
+  }
+  .nav-logo span { color: var(--accent2); }
   .nav-tabs { display: flex; gap: 4px; }
-  .nav-tab { padding: 8px 16px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--muted); }
-  .nav-tab.active { color: var(--accent); background: rgba(15,44,97,0.08); }
+  .nav-tab {
+    padding: 8px 16px; border-radius: 8px; cursor: pointer;
+    font-size: 13px; font-weight: 700;
+    color: var(--muted); transition: all 0.2s;
+    border: 1px solid transparent;
+  }
+  .nav-tab:hover { color: var(--text); background: var(--surface2); }
+  .nav-tab.active { 
+    color: var(--accent); 
+    background: rgba(15,44,97,0.08); 
+    border-color: rgba(15,44,97,0.2); 
+  }
+  .nav-right { display: flex; align-items: center; gap: 12px; }
+  .nav-user {
+    display: flex; align-items: center; gap: 10px;
+    font-size: 13px; color: var(--muted); font-weight: 500;
+  }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 700; font-size: 14px;
+    flex-shrink: 0;
+  }
+  .btn-logout {
+    background: none; border: 1px solid var(--border); border-radius: 8px;
+    color: var(--muted); padding: 7px 14px; font-size: 12px;
+    cursor: pointer; font-weight: 700;
+    transition: all 0.2s;
+  }
+  .btn-logout:hover { border-color: var(--danger); color: var(--danger); }
 
-  /* --- CARD FLIP SYSTEM --- */
-  .card-container {
-    perspective: 1000px;
-    width: 240px; height: 340px;
-    cursor: pointer;
-    margin: 10px auto;
+  /* ── MAIN CONTENT ── */
+  .main { flex: 1; padding: 32px; max-width: 1100px; margin: 0 auto; width: 100%; }
+
+  /* ── VIEWS ── */
+  .view { display: none; }
+  .view.active { display: block; }
+
+  /* ── PAGE HEADER ── */
+  .page-header { margin-bottom: 32px; }
+  .page-header h2 { 
+    font-size: 26px; 
+    letter-spacing: -0.5px; 
+    font-weight: normal;
   }
-  .card-flip {
-    position: relative; width: 100%; height: 100%;
-    transition: transform 0.6s; transform-style: preserve-3d;
+  .page-header p { color: var(--muted); font-size: 14px; margin-top: 6px; }
+
+  /* ── STATS STRIP ── */
+  .stats-strip { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; margin-bottom: 32px; }
+  .stat-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px 22px;
+    position: relative; overflow: hidden;
   }
-  .card-container.flipped .card-flip { transform: rotateY(180deg); }
-  .card-front, .card-back {
-    position: absolute; width: 100%; height: 100%;
-    backface-visibility: hidden; border-radius: 12px;
-    overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+  .stat-card::after {
+    content: '';
+    position: absolute; bottom: 0; left: 0; right: 0; height: 3px;
+    border-radius: 0 0 14px 14px;
   }
-  .card-back { transform: rotateY(180deg); }
-  .card-img { width: 100%; height: 100%; object-fit: cover; }
-  
-  /* --- RECIPIENT OVERLAY & GRAYSCALE --- */
-  .card-container.given .card-img { filter: grayscale(100%); opacity: 0.7; }
-  .recipient-tag {
-    position: absolute; bottom: 10px; left: 50%; transform: translateX(-50%);
-    background: var(--accent); color: white; padding: 4px 12px;
-    border-radius: 20px; font-size: 11px; font-weight: 700; z-index: 10;
+  .stat-card.c1::after { background: var(--accent); }
+  .stat-card.c2::after { background: var(--accent2); }
+  .stat-card.c3::after { background: var(--accent3); }
+  .stat-card.c4::after { background: var(--accent4); }
+  .stat-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); font-weight: 700; margin-bottom: 8px; }
+  .stat-value { font-size: 38px; line-height: 1; } 
+  .stat-card.c1 .stat-value { color: var(--accent); }
+  .stat-card.c2 .stat-value { color: var(--accent2); }
+  .stat-card.c3 .stat-value { color: var(--accent3); }
+  .stat-card.c4 .stat-value { color: var(--accent4); }
+
+  /* ── TEAM TABS ── */
+  .team-tabs { display: flex; gap: 8px; margin-bottom: 24px; flex-wrap: wrap; }
+  .team-tab {
+    padding: 10px 18px; border-radius: 10px; cursor: pointer;
+    font-size: 13px; font-weight: 700;
+    color: var(--muted); background: var(--surface); border: 1px solid var(--border);
+    transition: all 0.2s;
+  }
+  .team-tab:hover { color: var(--text); border-color: var(--accent); }
+  .team-tab.active { color: #ffffff; background: var(--accent); border-color: var(--accent); }
+
+  /* ── LEADERBOARD ── */
+  .leaderboard { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
+  .lb-header { padding: 20px 24px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+  .lb-header h3 { margin-bottom: 0; font-family: 'DM Sans', sans-serif; } 
+  .lb-row {
+    display: flex; align-items: center; gap: 16px;
+    padding: 14px 24px;
+    border-bottom: 1px solid var(--border);
+    transition: background 0.15s;
+  }
+  .lb-row:last-child { border-bottom: none; }
+  .lb-row:hover { background: var(--surface2); }
+  .lb-row.me { background: rgba(15,44,97,0.05); }
+  .rank {
+    font-size: 20px;
+    width: 32px; text-align: center; color: var(--muted);
+  }
+  .rank.gold { color: var(--accent); }
+  .rank.silver { color: #9ca3af; }
+  .rank.bronze { color: var(--accent2); }
+  .lb-name { flex: 1; font-weight: 700; color: var(--text); }
+  .lb-name small { display: block; font-size: 12px; color: var(--muted); font-weight: 500; font-family: 'DM Sans', sans-serif; }
+  .lb-cards { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+  .pill {
+    font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 20px;
+  }
+  .pill.pioneer { background: rgba(15,44,97,0.1); color: var(--accent); }
+  .pill.purposeful { background: rgba(255,81,161,0.12); color: var(--accent2); }
+  .pill.excellence { background: rgba(0,208,218,0.12); color: var(--accent3); }
+  .pill.reliable { background: rgba(5,150,105,0.12); color: #059669; }
+  .pill.sustainable { background: rgba(234,88,12,0.12); color: #ea580c; }
+  .pill.gold-card { background: rgba(217,119,6,0.15); color: #b45309; } /* Generic gold card pill if needed */
+  /* Specific classes for gold behaviors will need to be defined if custom colours are desired */
+  .pill.gold-behavior { background: rgba(15,44,97,0.15); color: var(--text); border: 1px solid var(--accent); } /* Default style for new gold behavior pill */
+
+  .pill.count { background: var(--surface2); color: var(--text); border: 1px solid var(--border); font-size: 12px; min-width: 28px; text-align: center; }
+
+  /* ── CARDS FEED ── */
+  .cards-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .card-item {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 20px;
+    position: relative;
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .card-item:hover { border-color: rgba(255,81,161,0.3); transform: translateY(-2px); }
+  .card-item .card-type { margin-bottom: 12px; }
+  .card-item .card-meta { font-size: 13px; color: var(--muted); margin-top: 10px; font-weight: 500; }
+  .card-item .card-note { font-size: 14px; color: var(--text); margin-top: 8px; font-style: italic; line-height: 1.5; }
+  .card-item .card-date { font-size: 11px; color: var(--muted); margin-top: 10px; font-weight: 500; }
+
+  /* ── GIVE CARD FORM ── */
+  .give-card-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 32px;
+    max-width: 560px;
+  }
+  .card-type-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 8px; }
+  .card-type-btn {
+    padding: 14px; border-radius: 12px; border: 2px solid var(--border);
+    background: var(--surface2); cursor: pointer; text-align: left;
+    transition: all 0.2s; color: var(--text);
+  }
+  .card-type-btn .ct-icon { font-size: 22px; margin-bottom: 6px; display: block; }
+  .card-type-btn .ct-label { font-size: 13px; font-weight: 700; display: block; }
+  .card-type-btn.selected.pioneer { border-color: var(--accent); background: rgba(15,44,97,0.08); }
+  .card-type-btn.selected.purposeful { border-color: var(--accent2); background: rgba(255,81,161,0.08); }
+  .card-type-btn.selected.excellence { border-color: var(--accent3); background: rgba(0,208,218,0.08); }
+  .card-type-btn.selected.reliable { border-color: #059669; background: rgba(5,150,105,0.08); }
+  .card-type-btn.selected.sustainable { border-color: #ea580c; background: rgba(234,88,12,0.08); }
+  .card-type-btn.selected.gold-card { border-color: #b45309; background: rgba(217,119,6,0.1); } /* Placeholder for gold-card class */
+  .card-type-btn:hover { border-color: var(--muted); }
+  .success-msg { color: var(--accent3); font-size: 14px; font-weight: 700; padding: 12px 16px; background: rgba(0,208,218,0.1); border-radius: 10px; border: 1px solid rgba(0,208,218,0.2); margin-top: 16px; display: none; }
+
+  /* ── MY CARDS ── */
+  .tabs-inner { display: flex; gap: 8px; margin-bottom: 24px; }
+  .tab-btn { padding: 8px 18px; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 700; color: var(--muted); background: var(--surface); border: 1px solid var(--border); transition: all 0.2s; }
+  .tab-btn.active { 
+    color: var(--accent); 
+    border-color: rgba(15,44,97,0.3); 
+    background: rgba(15,44,97,0.06); 
   }
 
-  /* --- ADMIN PANELS --- */
-  .admin-panel { background: white; padding: 24px; border-radius: 16px; border: 1px solid var(--border); margin-bottom: 20px; }
-  .btn { padding: 12px 24px; border-radius: 8px; border: none; cursor: pointer; font-weight: 700; }
-  .btn-primary { background: var(--accent); color: white; }
-  .form-group { margin-bottom: 15px; }
-  .form-group label { display: block; font-size: 12px; font-weight: 700; margin-bottom: 5px; }
-  input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 8px; }
+  /* ── ADMIN ── */
+  .admin-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  @media(max-width: 700px) { .admin-grid { grid-template-columns: 1fr; } }
+  .admin-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 24px; }
+  .admin-panel h3 { font-family: 'DM Sans', sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+  .user-list-item {
+    display: flex; align-items: center; gap: 12px;
+    padding: 10px 0; border-bottom: 1px solid var(--border);
+  }
+  .user-list-item:last-child { border-bottom: none; }
+  .user-list-item .uname { flex: 1; font-size: 14px; font-weight: 700; }
+  .user-list-item .urole { font-size: 11px; color: var(--muted); font-weight: 400; }
+  .badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 4px; }
+  .badge.admin { background: rgba(15,44,97,0.1); color: var(--accent); }
+  .badge.user { background: var(--surface2); color: var(--muted); }
+  .card-type-list-item { display: flex; align-items: center; gap: 10px; padding: 10px 0; border-bottom: 1px solid var(--border); }
+  .card-type-list-item:last-child { border-bottom: none; }
+  .card-type-list-item .ct-name { flex: 1; font-size: 14px; font-weight: 700; }
 
-  /* --- GRID --- */
-  .cards-display-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
-  .value-selector { display: flex; gap: 10px; margin-bottom: 20px; }
-  .value-btn { padding: 15px; border: 2px solid var(--border); border-radius: 12px; cursor: pointer; flex: 1; text-align: center; background: white; }
-  .value-btn.active { border-color: var(--accent2); background: #fff5f8; }
+  /* Gold Card Behaviors List Specific Styles */
+  .gold-card-team-group { margin-bottom: 20px; border: 1px solid var(--border); border-radius: 10px; padding: 15px; }
+  .gold-card-team-group:last-of-type { margin-bottom: 0; }
+  .gold-card-team-group h4 { font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 10px; color: var(--accent); }
+  .gold-card-value-group { margin-bottom: 10px; padding-left: 10px; border-left: 2px solid var(--border); }
+  .gold-card-value-group:last-of-type { margin-bottom: 0; }
+  .gold-card-value-group h5 { font-family: 'DM Sans', sans-serif; font-size: 14px; font-weight: 700; margin-bottom: 8px; color: var(--text); }
+  .gold-card-value-group ul { list-style: none; padding-left: 0; }
+  .gold-card-value-group li { 
+    display: flex; align-items: center; justify-content: space-between; 
+    padding: 8px 0; border-bottom: 1px dotted var(--border); font-size: 13px; 
+    font-weight: 500;
+  }
+  .gold-card-value-group li:last-child { border-bottom: none; }
+  .gold-card-value-group li .gold-icon { margin-right: 8px; font-size: 16px; }
+
+
+  /* ── EMPTY STATE ── */
+  .empty { text-align: center; padding: 48px 24px; color: var(--muted); }
+  .empty .empty-icon { font-size: 40px; margin-bottom: 12px; }
+  .empty p { font-size: 14px; font-weight: 500; }
+
+  /* ── ALERT ── */
+  .alert { padding: 12px 16px; border-radius: 10px; font-size: 13px; font-weight: 700; margin-bottom: 16px; display: none; }
+  .alert.error { background: rgba(224,80,96,0.1); border: 1px solid rgba(224,80,96,0.2); color: #e07080; }
+  .alert.success { background: rgba(0,208,218,0.1); border: 1px solid rgba(0,208,218,0.2); color: var(--accent3); }
+
+  /* scrollbar */
+  ::-webkit-scrollbar { width: 6px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+  @media(max-width: 600px) {
+    .topnav { padding: 0 16px; }
+    .main { padding: 16px; }
+    .nav-tabs { display: none; }
+    .give-card-box { padding: 20px; }
+    .card-type-grid { grid-template-columns: 1fr; }
+    .stats-strip { grid-template-columns: 1fr 1fr; }
+  }
 </style>
 </head>
 <body>
 
-<div id="auth-screen" style="padding: 50px; text-align: center;">
-  <h2>Behaviours on Display</h2>
-  <button class="btn btn-primary" onclick="doLogin()">Enter App</button>
+<!-- ══════════════════════════════════════════
+     AUTH SCREEN
+══════════════════════════════════════════ -->
+<div id="auth-screen">
+  <div class="auth-box">
+    <img src="ibl-energy-logo.png" alt="IBL Energy Logo" class="ibl-energy-main-logo">
+    <div class="auth-logo">Behaviours <span>on Display</span></div>
+    <div class="auth-sub">Recognition cards for high-performing teams</div>
+    <div class="alert error" id="auth-error"></div>
+    <div class="form-group">
+      <label>Email Address</label>
+      <input type="text" id="login-username" placeholder="e.g. delphine.laguette@ibl-energy.com" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input type="password" id="login-password" placeholder="Enter your password">
+    </div>
+    <button class="btn btn-primary" onclick="doLogin()">Sign In →</button>
+    <p style="margin-top:20px; font-size:12px; color:var(--muted); text-align:center;">
+      Please login with your official IBL Energy email address.
+    </p>
+  </div>
 </div>
 
+<!-- ══════════════════════════════════════════
+     APP
+══════════════════════════════════════════ -->
 <div id="app">
+  <!-- TOP NAV -->
   <nav class="topnav">
-    <div class="nav-logo">IBL Energy</div>
+    <div class="nav-logo">Behaviours <span>on Display</span></div>
     <div class="nav-tabs">
-      <div class="nav-tab active" onclick="showView('give')">Give Card</div>
-      <div class="nav-tab" onclick="showView('admin')">Admin</div>
+      <div class="nav-tab active" onclick="showView('dashboard')">Dashboard</div>
+      <div class="nav-tab" onclick="showView('give')">Give Card</div>
+      <div class="nav-tab" onclick="showView('mycards')">My Cards</div>
+      <div class="nav-tab" id="admin-tab" style="display:none" onclick="showView('admin')">Admin</div>
+    </div>
+    <div class="nav-right">
+      <div class="nav-user">
+        <div class="avatar" id="nav-avatar"></div>
+        <span id="nav-name"></span>
+      </div>
+      <button class="btn-logout" onclick="doLogout()">Sign out</button>
     </div>
   </nav>
 
   <div class="main">
-    <div class="view active" id="view-give">
-      <h2>Select a Core Value</h2>
-      <div class="value-selector" id="value-selector">
-        <button class="value-btn" onclick="selectValue('Pioneer')">🚀 Pioneer</button>
-        <button class="value-btn" onclick="selectValue('Purposeful')">🎯 Purposeful</button>
-        <button class="value-btn" onclick="selectValue('Excellence')">⭐ Excellence</button>
-        <button class="value-btn" onclick="selectValue('Reliable')">✅ Reliable</button>
-        <button class="value-btn" onclick="selectValue('Sustainable')">🌍 Sustainable</button>
-      </div>
 
-      <div id="cards-display-section" style="display:none;">
-        <h3 id="selected-value-title">Cards</h3>
-        <div class="form-group" style="max-width: 300px;">
-          <label>Select Recipient</label>
-          <select id="recipient-select"></select>
+    <!-- ── DASHBOARD ── -->
+    <div class="view active" id="view-dashboard">
+      <div class="page-header">
+        <h2>Team Dashboards</h2>
+        <p>Recognition leaderboards by team</p>
+      </div>
+      <div class="team-tabs" id="team-tabs">
+        <button class="team-tab active" onclick="showTeamTab('business-growth', this)">📈 Business Growth</button>
+        <button class="team-tab" onclick="showTeamTab('core-enablers', this)">⚙️ Core Enablers</button>
+        <button class="team-tab" onclick="showTeamTab('finance', this)">💰 Finance</button>
+        <button class="team-tab" onclick="showTeamTab('investment-legal', this)">⚖️ Investment / Legal</button>
+        <button class="team-tab" onclick="showTeamTab('operations', this)">🏗️ Operations</button>
+      </div>
+      <div id="team-dashboard-content"></div>
+    </div>
+
+    <!-- ── GIVE CARD ── -->
+    <div class="view" id="view-give">
+      <div class="page-header">
+        <h2>Give a Recognition Card</h2>
+        <p>Recognise a teammate's behaviour</p>
+      </div>
+      <div class="give-card-box">
+        <div class="form-group">
+          <label>Recipient</label>
+          <select id="give-recipient"></select>
         </div>
-        <div class="cards-display-grid" id="cards-grid"></div>
+
+        <!-- NEW: Card Category Selection -->
+        <div class="form-group">
+          <label>Card Category</label>
+          <div style="display:flex; gap: 15px; margin-bottom: 10px;">
+            <div>
+                <input type="radio" id="card-category-general" name="card-category" value="general" checked onchange="toggleCardSelection()">
+                <label for="card-category-general" style="display: inline-block; text-transform: none; font-weight: normal; letter-spacing: normal;">General Value Card</label>
+            </div>
+            <div>
+                <input type="radio" id="card-category-gold" name="card-category" value="gold" onchange="toggleCardSelection()">
+                <label for="card-category-gold" style="display: inline-block; text-transform: none; font-weight: normal; letter-spacing: normal;">Team-Specific Gold Behavior</label>
+            </div>
+          </div>
+        </div>
+
+        <!-- General Value Card Selection Grid -->
+        <div class="form-group" id="general-card-selection">
+          <label>Select Core Value</label>
+          <div class="card-type-grid" id="general-card-type-grid"></div>
+        </div>
+
+        <!-- Gold Behavior Card Selection List (Initially Hidden) -->
+        <div class="form-group" id="gold-card-selection" style="display:none;">
+          <label>Select Gold Behavior</label>
+          <select id="give-gold-behavior" class="form-control" onchange="selectGoldCardType(this.value)"></select>
+        </div>
+
+        <input type="hidden" id="give-type"> <!-- Stores cardTypeId for general or core value for gold -->
+        <input type="hidden" id="is-gold-card" value="false"> <!-- Indicates if it's a gold card -->
+        <input type="hidden" id="give-gold-behavior-id"> <!-- Stores actual goldBehaviorId if it's a gold card -->
+
+        <div class="form-group">
+          <label>Note <span style="color:var(--muted);font-weight:400">(optional)</span></label>
+          <textarea id="give-note" rows="3" placeholder="What did they do? Describe the moment..."></textarea>
+        </div>
+        <button class="btn btn-primary" onclick="giveCard()">Send Card ✦</button>
+        <div class="success-msg" id="give-success">✓ Card sent successfully!</div>
+        <div class="alert error" id="give-error"></div>
       </div>
     </div>
 
+    <!-- ── MY CARDS ── -->
+    <div class="view" id="view-mycards">
+      <div class="page-header">
+        <h2>My Cards</h2>
+        <p>Cards you've received and given</p>
+      </div>
+      <div class="stats-strip" id="my-stats"></div>
+      <div class="tabs-inner">
+        <button class="tab-btn active" onclick="showMyTab('received')">Received</button>
+        <button class="tab-btn" onclick="showMyTab('given')">Given</button>
+      </div>
+      <div id="my-cards-received" class="cards-grid"></div>
+      <div id="my-cards-given" class="cards-grid" style="display:none"></div>
+    </div>
+
+    <!-- ── ADMIN ── -->
     <div class="view" id="view-admin">
-      <div class="admin-panel">
-        <h3>Add New Card Template</h3>
-        <div class="form-group">
-          <label>Core Value</label>
-          <select id="admin-value-select">
-            <option>Pioneer</option><option>Purposeful</option><option>Excellence</option><option>Reliable</option><option>Sustainable</option>
-          </select>
+      <div class="page-header">
+        <h2>Admin Panel</h2>
+        <p>Manage users, card types, and all activity</p>
+      </div>
+      <div class="admin-grid">
+
+        <!-- Add User -->
+        <div class="admin-panel">
+          <h3>➕ Add User</h3>
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="new-user-name" placeholder="e.g. Sarah Johnson">
+          </div>
+          <div class="form-group">
+            <label>Email Address</label>
+            <input type="text" id="new-user-username" placeholder="e.g. sarah.j@ibl-energy.com">
+          </div>
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="new-user-password" placeholder="Set a password">
+          </div>
+          <div class="form-group">
+            <label>Role</label>
+            <select id="new-user-role">
+              <option value="user">Team Member</option>
+              <option value="admin">Admin</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Team</label>
+            <select id="new-user-team">
+              <option value="business-growth">Business Growth</option>
+              <option value="core-enablers">Core Enablers</option>
+              <option value="finance">Finance</option>
+              <option value="investment-legal">Investment / Legal</option>
+              <option value="operations">Operations</option>
+            </select>
+          </div>
+          <div class="alert error" id="add-user-error"></div>
+          <div class="alert success" id="add-user-success"></div>
+          <button class="btn btn-primary" onclick="addUser()">Add User</button>
         </div>
-        <div class="form-group">
-          <label>Recto (Front PNG)</label>
-          <input type="file" id="recto-file" accept="image/png">
+
+        <!-- User List -->
+        <div class="admin-panel">
+          <h3>👥 All Users</h3>
+          <div id="admin-user-list"></div>
         </div>
-        <div class="form-group">
-          <label>Verso (Back PNG)</label>
-          <input type="file" id="verso-file" accept="image/png">
+
+        <!-- Add Card Type (General Values) -->
+        <div class="admin-panel">
+          <h3>🃏 Add General Card Type</h3>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:15px;">These represent your 5 core values and other general recognition types.</p>
+          <div class="form-group">
+            <label>Card Name</label>
+            <input type="text" id="new-card-type-name" placeholder="e.g. Creative Thinker">
+          </div>
+          <div class="form-group">
+            <label>Emoji Icon</label>
+            <input type="text" id="new-card-type-icon" placeholder="e.g. 💡">
+          </div>
+          <div class="alert error" id="add-ct-error"></div>
+          <button class="btn btn-primary" onclick="addCardType()">Add Card Type</button>
         </div>
-        <button class="btn btn-primary" onclick="uploadCard()">Save Card Template</button>
+
+        <!-- General Card Types List -->
+        <div class="admin-panel">
+          <h3>📋 General Card Types</h3>
+          <div id="admin-card-types-list"></div>
+        </div>
+
+        <!-- NEW: Manage Gold Card Behaviors -->
+        <div class="admin-panel">
+          <h3>🏆 Manage Gold Card Behaviors</h3>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:15px;">Define specific non-negotiable behaviors for each team and core value.</p>
+          <div class="form-group">
+            <label>Select Team</label>
+            <select id="new-gold-card-team"></select>
+          </div>
+          <div class="form-group">
+            <label>Select Core Value</label>
+            <select id="new-gold-card-value"></select>
+          </div>
+          <div class="form-group">
+            <label>Behavior Name</label>
+            <input type="text" id="new-gold-card-name" placeholder="e.g. Always takes initiative">
+          </div>
+          <div class="form-group">
+            <label>Emoji Icon (optional)</label>
+            <input type="text" id="new-gold-card-icon" placeholder="e.g. ✨">
+          </div>
+          <div class="alert error" id="add-gold-ct-error"></div>
+          <div class="alert success" id="add-gold-ct-success"></div>
+          <button class="btn btn-primary" onclick="addGoldCardBehavior()">Add Gold Behavior</button>
+        </div>
+
+        <!-- NEW: Gold Card Behaviors List -->
+        <div class="admin-panel">
+          <h3>📋 Gold Card Behaviors List</h3>
+          <div id="admin-gold-card-list"></div>
+          <div class="empty" id="admin-gold-card-list-empty" style="display:none"><div class="empty-icon">🏆</div><p>No gold behaviors defined yet.</p></div>
+        </div>
+
+        <!-- All Activity -->
+        <div class="admin-panel" style="grid-column: 1 / -1;">
+          <h3>📊 All Activity</h3>
+          <div id="admin-all-cards" class="cards-grid" style="margin-top:8px"></div>
+        </div>
+
       </div>
     </div>
-  </div>
-</div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
 
 <script>
-// --- DATA HANDLING ---
-let cards = JSON.parse(localStorage.getItem('ibl_cards')) || [];
-let givenCards = JSON.parse(localStorage.getItem('ibl_given')) || [];
-const users = ["Pierre", "Aarti", "Alvin", "Joshua", "Delphine"];
+// ══════════════════════════════════════
+// DATA STORE (localStorage)
+// ══════════════════════════════════════
+const STORE_PREFIX = 'ibl_v5_'; // Updated prefix to ensure fresh data
+const STORE = {
+  get(key) { try { return JSON.parse(localStorage.getItem(STORE_PREFIX + key)); } catch { return null; } },
+  set(key, val) { localStorage.setItem(STORE_PREFIX + key, JSON.stringify(val)); }
+};
 
-function showView(id) {
-  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
-  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-  document.getElementById('view-' + id).classList.add('active');
-  if(id === 'give') renderRecipientSelect();
+function initData() {
+  if (!STORE.get('users')) {
+    STORE.set('users', [
+      { id: 'u1', name: 'Pierre Egot', username: 'pierre.egot@ibl-energy.com', password: 'EnergyPierre!', role: 'user', team: 'core-enablers', color: '#0F2C61' },
+      { id: 'u2', name: 'Aarti Gundooa', username: 'aarti.gundooa@ibl-energy.com', password: 'EnergyAarti!', role: 'user', team: 'core-enablers', color: '#FF51A1' },
+      { id: 'u3', name: 'Alvin Moutia', username: 'alvin.moutia@ibl-energy.com', password: 'EnergyAlvin!', role: 'user', team: 'operations', color: '#00D0DA' },
+      { id: 'u4', name: 'Rao Appannah', username: 'rao.appannah@ibl-energy.com', password: 'EnergyRao!', role: 'user', team: 'operations', color: '#0F2C61' },
+      { id: 'u5', name: 'Joshua Desjardins', username: 'joshua.desjardins@ibl-energy.com', password: 'EnergyJoshua!', role: 'user', team: 'business-growth', color: '#FF51A1' },
+      { id: 'u6', name: 'Delphine Laguette', username: 'delphine.laguette@ibl-energy.com', password: 'EnergyDelphine!', role: 'admin', team: 'core-enablers', color: '#00D0DA' },
+      { id: 'u7', name: 'Edmund Njagi', username: 'edmund.njagi@ibl-energy.com', password: 'EnergyEdmund!', role: 'user', team: 'core-enablers', color: '#0F2C61' },
+      { id: 'u8', name: 'Shaan Goonniah', username: 'shaan.goonniah@ibl-energy.com', password: 'EnergyShaan!', role: 'user', team: 'finance', color: '#FF51A1' },
+      { id: 'u9', name: 'Kavinen Chocalingum', username: 'kavinen.chocalingum@ibl-energy.com', password: 'EnergyKavinen!', role: 'user', team: 'operations', color: '#00D0DA' },
+      { id: 'u10', name: 'Daren Soobrayen', username: 'daren.soobrayen@ibl-energy.com', password: 'EnergyDaren!', role: 'user', team: 'operations', color: '#0F2C61' },
+      { id: 'u11', name: 'Arnaud Jeannot', username: 'arnaud.jeannot@ibl-energy.com', password: 'EnergyArnaud!', role: 'user', team: 'business-growth', color: '#FF51A1' },
+      { id: 'u12', name: 'Shakeel Ebrahim', username: 'shakeel.ebrahim@ibl-energy.com', password: 'EnergyShakeel!', role: 'user', team: 'finance', color: '#00D0DA' },
+      { id: 'u13', name: 'Azagen Murthen', username: 'azagen.murthen@ibl-energy.com', password: 'EnergyAzagen!', role: 'user', team: 'finance', color: '#0F2C61' },
+      { id: 'u14', name: 'Hansley Gaya', username: 'hansley.gaya@ibl-energy.com', password: 'EnergyHansley!', role: 'user', team: 'operations', color: '#FF51A1' },
+      { id: 'u15', name: 'Aradhana Beeharry', username: 'aradhana.beeharry@ibl-energy.com', password: 'EnergyAradhana!', role: 'user', team: 'business-growth', color: '#00D0DA' },
+      { id: 'u16', name: 'Agnes Wangechi', username: 'agnes.wangui@ibl-energy.com', password: 'EnergyAgnes!', role: 'user', team: 'core-enablers', color: '#0F2C61' },
+      { id: 'u17', name: 'Varun Beezloll', username: 'varun.beezloll@ibl-energy.com', password: 'EnergyVarun!', role: 'user', team: 'operations', color: '#FF51A1' },
+      { id: 'u18', name: 'Luqman Baulum', username: 'luqman.baulum@ibl-energy.com', password: 'EnergyLuqman!', role: 'user', team: 'operations', color: '#00D0DA' },
+      { id: 'u19', name: 'Kamlesh Koonjbeeharry', username: 'kamlesh.koonjbeeharry@ibl-energy.com', password: 'EnergyKamlesh!', role: 'user', team: 'operations', color: '#0F2C61' },
+      { id: 'u20', name: 'Disha Seechurn', username: 'disha.seechurn@ibl-energy.com', password: 'EnergyDisha!', role: 'user', team: 'operations', color: '#FF51A1' },
+      { id: 'u21', name: 'Safya Briki', username: 'safya.briki@ibl-energy.com', password: 'EnergySafya!', role: 'user', team: 'business-growth', color: '#00D0DA' },
+      { id: 'u22', name: 'Dishma Ramsaha', username: 'dishma.ramsaha@ibl-energy.com', password: 'EnergyDishma!', role: 'user', team: 'finance', color: '#0F2C61' },
+      { id: 'u23', name: 'Alvaro Fuenzalida Cleary', username: 'alvaro.fuenzalida@ibl-energy.com', password: 'EnergyAlvaro!', role: 'user', team: 'operations', color: '#FF51A1' },
+      { id: 'u24', name: 'Arjun Calleea', username: 'arjun.calleea@ibl-energy.com', password: 'EnergyArjun!', role: 'user', team: 'finance', color: '#00D0DA' },
+      { id: 'u25', name: 'Teven Cunniappen', username: 'teven.cunniappen@ibl-energy.com', password: 'EnergyTeven!', role: 'user', team: 'core-enablers', color: '#0F2C61' },
+      { id: 'u26', name: 'Akshay Gunnoo', username: 'Akshay.Gunnoo@ibl-energy.com', password: 'EnergyAkshay!', role: 'user', team: 'finance', color: '#FF51A1' },
+      { id: 'u27', name: 'Poumalen Curreevanden', username: 'poumalen.curreevanden@ibl-energy.com', password: 'EnergyPoumalen!', role: 'user', team: 'business-growth', color: '#00D0DA' },
+      { id: 'u28', name: 'Dhivesh Ramessur', username: 'dhivesh.ramessur@ibl-energy.com', password: 'EnergyDhivesh!', role: 'user', team: 'operations', color: '#0F2C61' },
+      { id: 'u29', name: 'David Soobaya', username: 'david.soobaya@ibl-enery.com', password: 'EnergyDavid!', role: 'user', team: 'core-enablers', color: '#FF51A1' }
+    ]);
+  }
+  if (!STORE.get('cardTypes')) {
+    STORE.set('cardTypes', [
+      { id: 'ct1', name: 'Pioneer', icon: '🚀', cls: 'pioneer' },
+      { id: 'ct2', name: 'Purposeful', icon: '🎯', cls: 'purposeful' },
+      { id: 'ct3', name: 'Excellence', icon: '⭐', cls: 'excellence' },
+      { id: 'ct4', name: 'Reliable', icon: '✅', cls: 'reliable' },
+      { id: 'ct5', name: 'Sustainable', icon: '🌍', cls: 'sustainable' }
+      /* Removed ct6 'Gold Card' to align with "5 values" for gold behaviors */
+    ]);
+  }
+  if (!STORE.get('cards')) { STORE.set('cards', []); }
+  if (!STORE.get('goldCardBehaviors')) { STORE.set('goldCardBehaviors', []); } 
 }
+
+// ══════════════════════════════════════
+// AUTH
+// ══════════════════════════════════════
+let currentUser = null;
 
 function doLogin() {
+  const un = document.getElementById('login-username').value.trim().toLowerCase();
+  const pw = document.getElementById('login-password').value;
+  const users = STORE.get('users') || [];
+  const user = users.find(u => u.username.toLowerCase() === un && u.password === pw);
+  if (!user) { showAuthError('Invalid email address or password.'); return; }
+  currentUser = user;
   document.getElementById('auth-screen').style.display = 'none';
   document.getElementById('app').style.display = 'flex';
+  document.getElementById('nav-name').textContent = user.name;
+  const av = document.getElementById('nav-avatar');
+  av.textContent = user.name.charAt(0).toUpperCase();
+  av.style.background = user.color || '#0F2C61'; 
+  av.style.color = '#ffffff';
+  if (user.role === 'admin') document.getElementById('admin-tab').style.display = '';
+  showView('dashboard');
 }
 
-// --- ADMIN: STOCKING IMAGES ---
-function uploadCard() {
-  const value = document.getElementById('admin-value-select').value;
-  const recto = document.getElementById('recto-file').files[0];
-  const verso = document.getElementById('verso-file').files[0];
-
-  if(!recto || !verso) return alert("Please select both PNG files");
-
-  const readerR = new FileReader();
-  readerR.onload = function(e) {
-    const rectoData = e.target.result;
-    const readerV = new FileReader();
-    readerV.onload = function(e2) {
-      const versoData = e2.target.result;
-      cards.push({ id: Date.now(), value, recto: rectoData, verso: versoData });
-      localStorage.setItem('ibl_cards', JSON.stringify(cards));
-      alert("Card Added!");
-    };
-    readerV.readAsDataURL(verso);
-  };
-  readerR.readAsDataURL(recto);
+function doLogout() {
+  currentUser = null;
+  document.getElementById('auth-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('admin-tab').style.display = 'none';
+  document.getElementById('login-username').value = '';
+  document.getElementById('login-password').value = '';
+  hideAuthError();
 }
 
-// --- DISPLAY & GIVE CARDS ---
-function selectValue(val) {
-  document.getElementById('cards-display-section').style.display = 'block';
-  document.getElementById('selected-value-title').innerText = val + " Cards";
-  renderCards(val);
+document.getElementById('login-password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+document.getElementById('login-username').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
+
+function showAuthError(msg) {
+  const el = document.getElementById('auth-error');
+  el.textContent = msg; el.style.display = 'block';
+}
+function hideAuthError() { document.getElementById('auth-error').style.display = 'none'; }
+
+// ══════════════════════════════════════
+// NAVIGATION
+// ══════════════════════════════════════
+function showView(name) {
+  document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('view-' + name).classList.add('active');
+  const tabs = { dashboard: 0, give: 1, mycards: 2, admin: 3 };
+  const allTabs = document.querySelectorAll('.nav-tab');
+  const idx = ['dashboard','give','mycards','admin'].indexOf(name);
+  if (idx !== -1 && allTabs[idx]) allTabs[idx].classList.add('active');
+  if (name === 'dashboard') renderDashboard();
+  if (name === 'give') renderGiveForm();
+  if (name === 'mycards') renderMyCards();
+  if (name === 'admin') renderAdmin();
 }
 
-function renderCards(filterValue) {
-  const grid = document.getElementById('cards-grid');
-  grid.innerHTML = '';
+// ══════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════
+const COLORS = ['#0F2C61','#FF51A1','#00D0DA','#0891b2','#db2777','#d97706','#65a30d','#dc2626']; 
+
+function getCardTypeInfo(id) {
+  return (STORE.get('cardTypes') || []).find(ct => ct.id === id) || { name: id, icon: '🃏', cls: '' };
+}
+function getGoldBehaviorInfo(id) {
+  return (STORE.get('goldCardBehaviors') || []).find(gb => gb.id === id) || { name: 'Unknown Gold Behavior', icon: '❓', teamId: '', cardTypeId: '' };
+}
+function getUserById(id) {
+  return (STORE.get('users') || []).find(u => u.id === id) || { name: 'Unknown', color: '#0F2C61' }; 
+}
+function getTeamById(id) {
+    return TEAMS.find(t => t.id === id) || { name: 'Unknown Team', icon: '❓' };
+}
+function fmtDate(ts) {
+  const d = new Date(ts);
+  return d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+function makeId() { return 'id' + Math.random().toString(36).slice(2, 10); }
+function pillCls(ct) {
+  const valid = ['pioneer','purposeful','excellence','reliable','sustainable']; 
+  return valid.includes(ct.cls) ? ct.cls : '';
+}
+
+// ══════════════════════════════════════
+// DASHBOARD
+// ══════════════════════════════════════
+const TEAMS = [
+  { id: 'business-growth', name: 'Business Growth', icon: '📈' },
+  { id: 'core-enablers', name: 'Core Enablers', icon: '⚙️' },
+  { id: 'finance', name: 'Finance', icon: '💰' },
+  { id: 'investment-legal', name: 'Investment / Legal', icon: '⚖️' },
+  { id: 'operations', name: 'Operations', icon: '🏗️' }
+];
+
+let activeTeamTab = 'core-enablers';
+
+function showTeamTab(teamId, el) {
+  activeTeamTab = teamId;
+  document.querySelectorAll('.team-tab').forEach(t => t.classList.remove('active'));
+  el.classList.add('active');
+  renderTeamDashboard(teamId);
+}
+
+function renderDashboard() {
+  renderTeamDashboard(activeTeamTab);
+}
+
+function renderTeamDashboard(teamId) {
+  const team = TEAMS.find(t => t.id === teamId);
+  const users = (STORE.get('users') || []).filter(u => u.team === teamId);
+  const allCards = STORE.get('cards') || [];
+  const cardTypes = STORE.get('cardTypes') || [];
+  const goldCardBehaviors = STORE.get('goldCardBehaviors') || [];
+
+  const cardsInTeam = allCards.filter(c => users.some(u => u.id === c.toId));
   
-  const filtered = cards.filter(c => c.value === filterValue);
-  
-  filtered.forEach(card => {
-    const isGiven = givenCards.find(g => g.cardId === card.id);
-    const container = document.createElement('div');
-    container.className = `card-container ${isGiven ? 'given' : ''}`;
-    container.onclick = () => {
-      if(!isGiven) {
-        giveThisCard(card.id);
-      } else {
-        container.classList.toggle('flipped');
-      }
-    };
+  const totalCards = cardsInTeam.length;
+  const activeGivers = [...new Set(cardsInTeam.map(c => c.fromId))].length;
 
-    container.innerHTML = `
-      <div class="card-flip">
-        <div class="card-front">
-          ${isGiven ? `<div class="recipient-tag">To: ${isGiven.to}</div>` : ''}
-          <img src="${card.recto}" class="card-img">
-        </div>
-        <div class="card-back">
-          <img src="${card.verso}" class="card-img">
-        </div>
-      </div>
-    `;
-    grid.appendChild(container);
+  const statsHtml = `
+    <div class="stats-strip">
+      <div class="stat-card c1"><div class="stat-label">Total Cards Received</div><div class="stat-value">${totalCards}</div></div>
+      <div class="stat-card c3"><div class="stat-label">Team Members</div><div class="stat-value">${users.length}</div></div>
+      <div class="stat-card c4"><div class="stat-label">Active Givers</div><div class="stat-value">${activeGivers}</div></div>
+      <div class="stat-card c2"><div class="stat-label">Card Types</div><div class="stat-value">${cardTypes.length + goldCardBehaviors.length}</div></div>
+    </div>`;
+
+  // Tally
+  const tally = {};
+  users.forEach(u => { tally[u.id] = { user: u, total: 0, types: {}, goldTypes: {} }; });
+  
+  cardsInTeam.forEach(c => {
+    if (!tally[c.toId]) return;
+    tally[c.toId].total++;
+    if (c.isGoldCard) {
+        tally[c.toId].goldTypes[c.goldBehaviorId] = (tally[c.toId].goldTypes[c.goldBehaviorId] || 0) + 1;
+    } else {
+        tally[c.toId].types[c.typeId] = (tally[c.toId].types[c.typeId] || 0) + 1;
+    }
   });
-}
 
-function renderRecipientSelect() {
-  const sel = document.getElementById('recipient-select');
-  sel.innerHTML = users.map(u => `<option>${u}</option>`).join('');
-}
+  const sorted = Object.values(tally).sort((a, b) => b.total - a.total);
+  const rankClasses = ['gold','silver','bronze'];
 
-function giveThisCard(cardId) {
-  const recipient = document.getElementById('recipient-select').value;
-  if(confirm(`Give this card to ${recipient}?`)) {
-    givenCards.push({ cardId, to: recipient });
-    localStorage.setItem('ibl_given', JSON.stringify(givenCards));
-    renderCards(cards.find(c => c.id === cardId).value);
+  let lbRows = '';
+  if (sorted.length === 0) {
+    lbRows = '<div class="empty"><div class="empty-icon">🏆</div><p>No members in this team yet. Add members via the Admin panel.</p></div>';
+  } else {
+    lbRows = sorted.map((entry, i) => {
+      const rc = rankClasses[i] || '';
+      const isMe = entry.user.id === currentUser.id;
+      
+      let typePills = cardTypes.map(ct => {
+        const n = entry.types[ct.id] || 0;
+        if (!n) return '';
+        return `<span class="pill ${pillCls(ct)}">${ct.icon} ${ct.name} ×${n}</span>`;
+      }).join('');
+
+      let goldPills = goldCardBehaviors.map(gb => {
+        const n = entry.goldTypes[gb.id] || 0;
+        if (!n) return '';
+        const coreValue = getCardTypeInfo(gb.cardTypeId);
+        return `<span class="pill gold-behavior" title="Gold: ${coreValue.name}">${gb.icon} ${gb.name} ×${n}</span>`;
+      }).join('');
+
+      return `
+        <div class="lb-row ${isMe ? 'me' : ''}">
+          <div class="rank ${rc}">${i + 1}</div>
+          <div class="avatar" style="background:${entry.user.color||'#0F2C61'};color:#ffffff">${entry.user.name.charAt(0).toUpperCase()}</div>
+          <div class="lb-name">${entry.user.name} ${isMe ? '<small>— You</small>' : ''}</div>
+          <div class="lb-cards">
+            ${typePills || goldPills || '<span style="font-size:12px;color:var(--muted)">No cards yet</span>'}
+            ${(typePills && goldPills) ? '<br>' : ''}
+            ${goldPills}
+            <span class="pill count">${entry.total}</span>
+          </div>
+        </div>`;
+    }).join('');
   }
+
+  document.getElementById('team-dashboard-content').innerHTML = `
+    ${statsHtml}
+    <div class="leaderboard">
+      <div class="lb-header">
+        <h3>${team.icon} ${team.name} Leaderboard</h3>
+        <span style="font-size:13px;color:var(--muted)">All time</span>
+      </div>
+      ${lbRows}
+    </div>`;
 }
 
-// Initial state
-renderRecipientSelect();
+// ══════════════════════════════════════
+// GIVE CARD
+// ══════════════════════════════════════
+let selectedCardIdentifier = { id: null, isGold: false };
+
+function renderGiveForm() {
+  const users = STORE.get('users') || [];
+  const others = users.filter(u => u.id !== currentUser.id);
+  const sel = document.getElementById('give-recipient');
+  sel.innerHTML = others.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+
+  const generalCardTypes = STORE.get('cardTypes') || [];
+  const clsList = ['pioneer','purposeful','excellence','reliable','sustainable']; 
+  const generalGrid = document.getElementById('general-card-type-grid');
+  generalGrid.innerHTML = generalCardTypes.map((ct, i) => `
+    <button class="card-type-btn ${clsList[i % clsList.length]}" onclick="selectGeneralCardType('${ct.id}', this, '${clsList[i % clsList.length]}')" data-id="${ct.id}">
+      <span class="ct-icon">${ct.icon}</span>
+      <span class="ct-label">${ct.name}</span>
+    </button>`).join('');
+
+  const goldBehaviors = STORE.get('goldCardBehaviors') || [];
+  const goldSelect = document.getElementById('give-gold-behavior');
+  goldSelect.innerHTML = '<option value="">Select a Gold Behavior</option>' + goldBehaviors.map(gb => {
+    const team = getTeamById(gb.teamId);
+    const coreValue = getCardTypeInfo(gb.cardTypeId);
+    return `<option value="${gb.id}">${gb.icon} ${gb.name} (${team.name} - ${coreValue.name})</option>`;
+  }).join('');
+
+  selectedCardIdentifier = { id: null, isGold: false };
+  document.getElementById('give-type').value = '';
+  document.getElementById('is-gold-card').value = 'false';
+  document.getElementById('give-gold-behavior-id').value = '';
+  document.getElementById('give-note').value = '';
+  document.getElementById('give-success').style.display = 'none';
+  document.getElementById('give-error').style.display = 'none';
+
+  // Reset category selection and toggle visibility
+  document.getElementById('card-category-general').checked = true;
+  toggleCardSelection();
+}
+
+function toggleCardSelection() {
+    const isGeneral = document.getElementById('card-category-general').checked;
+    document.getElementById('general-card-selection').style.display = isGeneral ? 'block' : 'none';
+    document.getElementById('gold-card-selection').style.display = isGeneral ? 'none' : 'block';
+
+    // Reset selected card type when toggling
+    selectedCardIdentifier = { id: null, isGold: false };
+    document.getElementById('give-type').value = '';
+    document.getElementById('is-gold-card').value = 'false';
+    document.getElementById('give-gold-behavior-id').value = '';
+    document.querySelectorAll('#general-card-type-grid .card-type-btn').forEach(b => b.classList.remove('selected', 'pioneer', 'purposeful', 'excellence', 'reliable', 'sustainable'));
+    document.getElementById('give-gold-behavior').value = '';
+}
+
+function selectGeneralCardType(id, el, cls) {
+  selectedCardIdentifier = { id: id, isGold: false };
+  document.getElementById('give-type').value = id;
+  document.getElementById('is-gold-card').value = 'false';
+  document.getElementById('give-gold-behavior-id').value = '';
+
+  document.querySelectorAll('#general-card-type-grid .card-type-btn').forEach(b => b.classList.remove('selected', 'pioneer', 'purposeful', 'excellence', 'reliable', 'sustainable'));
+  el.classList.add('selected', cls);
+}
+
+function selectGoldCardType(goldBehaviorId) {
+    if (!goldBehaviorId) {
+        selectedCardIdentifier = { id: null, isGold: false };
+        document.getElementById('give-type').value = '';
+        document.getElementById('is-gold-card').value = 'false';
+        document.getElementById('give-gold-behavior-id').value = '';
+        return;
+    }
+    const goldBehavior = getGoldBehaviorInfo(goldBehaviorId);
+    selectedCardIdentifier = { id: goldBehavior.cardTypeId, isGold: true, goldBehaviorId: goldBehaviorId }; // typeId becomes the core value
+    document.getElementById('give-type').value = goldBehavior.cardTypeId;
+    document.getElementById('is-gold-card').value = 'true';
+    document.getElementById('give-gold-behavior-id').value = goldBehaviorId;
+
+    // Clear general card selection visual state
+    document.querySelectorAll('#general-card-type-grid .card-type-btn').forEach(b => b.classList.remove('selected', 'pioneer', 'purposeful', 'excellence', 'reliable', 'sustainable'));
+}
+
+
+function giveCard() {
+  const toId = document.getElementById('give-recipient').value;
+  const note = document.getElementById('give-note').value.trim();
+  const errEl = document.getElementById('give-error');
+  errEl.style.display = 'none';
+
+  if (!selectedCardIdentifier.id) { errEl.textContent = 'Please select a behaviour card.'; errEl.style.display = 'block'; return; }
+  if (!toId) { errEl.textContent = 'Please select a recipient.'; errEl.style.display = 'block'; return; }
+
+  const cards = STORE.get('cards') || [];
+  const newCard = { 
+      id: makeId(), 
+      fromId: currentUser.id, 
+      toId, 
+      typeId: selectedCardIdentifier.id, // This is the core value ID
+      isGoldCard: selectedCardIdentifier.isGold,
+      goldBehaviorId: selectedCardIdentifier.isGold ? selectedCardIdentifier.goldBehaviorId : undefined,
+      note, 
+      ts: Date.now() 
+  };
+  cards.push(newCard);
+  STORE.set('cards', cards);
+
+  document.getElementById('give-success').style.display = 'block';
+  selectedCardIdentifier = { id: null, isGold: false };
+  document.getElementById('give-type').value = '';
+  document.getElementById('is-gold-card').value = 'false';
+  document.getElementById('give-gold-behavior-id').value = '';
+  document.getElementById('give-note').value = '';
+  document.querySelectorAll('#general-card-type-grid .card-type-btn').forEach(b => b.classList.remove('selected', 'pioneer', 'purposeful', 'excellence', 'reliable', 'sustainable'));
+  document.getElementById('give-gold-behavior').value = '';
+  document.getElementById('card-category-general').checked = true; // Reset to general
+  toggleCardSelection(); // Update UI
+
+  setTimeout(() => { document.getElementById('give-success').style.display = 'none'; }, 3000);
+}
+
+// ══════════════════════════════════════
+// MY CARDS
+// ══════════════════════════════════════
+function renderMyCards() {
+  const cards = STORE.get('cards') || [];
+  const received = cards.filter(c => c.toId === currentUser.id);
+  const given = cards.filter(c => c.fromId === currentUser.id);
+
+  document.getElementById('my-stats').innerHTML = `
+    <div class="stat-card c1"><div class="stat-label">Cards Received</div><div class="stat-value">${received.length}</div></div>
+    <div class="stat-card c2"><div class="stat-label">Cards Given</div><div class="stat-value">${given.length}</div></div>
+  `;
+
+  renderCardList('my-cards-received', received, 'from');
+  renderCardList('my-cards-given', given, 'to');
+}
+
+function renderCardList(elId, cards, direction) {
+  const el = document.getElementById(elId);
+  if (!cards.length) {
+    el.innerHTML = `<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🃏</div><p>No cards ${direction === 'from' ? 'received' : 'given'} yet.</p></div>`;
+    return;
+  }
+  el.innerHTML = [...cards].reverse().map(c => {
+    let cardPillHtml;
+
+    if (c.isGoldCard) {
+        const goldBehavior = getGoldBehaviorInfo(c.goldBehaviorId);
+        const coreValue = getCardTypeInfo(goldBehavior.cardTypeId);
+        const team = getTeamById(goldBehavior.teamId);
+        cardPillHtml = `<span class="pill gold-behavior" title="Gold: ${coreValue.name} (${team.name})">${goldBehavior.icon} ${goldBehavior.name}</span>`;
+    } else {
+        const ct = getCardTypeInfo(c.typeId);
+        cardPillHtml = `<span class="pill ${pillCls(ct)}">${ct.icon} ${ct.name}</span>`;
+    }
+
+    const other = getUserById(direction === 'from' ? c.fromId : c.toId);
+    cardMetaLabel = direction === 'from' ? `From ${other.name}` : `To ${other.name}`;
+    
+    return `
+      <div class="card-item">
+        <div class="card-type">${cardPillHtml}</div>
+        <div class="card-meta">${cardMetaLabel}</div>
+        ${c.note ? `<div class="card-note">"${c.note}"</div>` : ''}
+        <div class="card-date">${fmtDate(c.ts)}</div>
+      </div>`;
+  }).join('');
+}
+
+function showMyTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById('my-cards-received').style.display = tab === 'received' ? 'grid' : 'none';
+  document.getElementById('my-cards-given').style.display = tab === 'given' ? 'grid' : 'none';
+}
+
+// ══════════════════════════════════════
+// ADMIN
+// ══════════════════════════════════════
+function renderAdmin() {
+  renderAdminUserList();
+  renderAdminCardTypes();
+  renderGoldCardManagementForm();
+  renderAdminGoldCardBehaviors();
+  renderAdminAllCards();
+}
+
+function renderAdminUserList() {
+  const users = STORE.get('users') || [];
+  const el = document.getElementById('admin-user-list');
+  el.innerHTML = users.map(u => {
+    const team = TEAMS.find(t => t.id === u.team);
+    const teamLabel = team ? `${team.icon} ${team.name}` : 'No team';
+    return `
+    <div class="user-list-item">
+      <div class="avatar" style="background:${u.color||'#0F2C61'};color:#ffffff;width:32px;height:32px;font-size:12px">${u.name.charAt(0).toUpperCase()}</div>
+      <div class="uname">${u.name}<br><span class="urole">${u.username} · ${teamLabel} · Pwd: ${u.password}</span></div>
+      <span class="badge ${u.role}">${u.role}</span>
+      ${u.id !== currentUser.id ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Remove</button>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function renderAdminCardTypes() {
+  const cardTypes = STORE.get('cardTypes') || [];
+  const el = document.getElementById('admin-card-types-list');
+  el.innerHTML = cardTypes.map(ct => `
+    <div class="card-type-list-item">
+      <span>${ct.icon}</span>
+      <span class="ct-name">${ct.name}</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteCardType('${ct.id}')">Remove</button>
+    </div>`).join('');
+}
+
+// Render Gold Card Management Form
+function renderGoldCardManagementForm() {
+    const teamSelect = document.getElementById('new-gold-card-team');
+    teamSelect.innerHTML = TEAMS.map(team => `<option value="${team.id}">${team.icon} ${team.name}</option>`).join('');
+
+    const coreValueSelect = document.getElementById('new-gold-card-value');
+    const cardTypes = STORE.get('cardTypes') || [];
+    coreValueSelect.innerHTML = cardTypes.map(ct => `<option value="${ct.id}">${ct.icon} ${ct.name}</option>`).join('');
+}
+
+// Add Gold Card Behavior
+function addGoldCardBehavior() {
+    const teamId = document.getElementById('new-gold-card-team').value;
+    const cardTypeId = document.getElementById('new-gold-card-value').value;
+    const name = document.getElementById('new-gold-card-name').value.trim();
+    const icon = document.getElementById('new-gold-card-icon').value.trim() || '🏆';
+    const errEl = document.getElementById('add-gold-ct-error');
+    const sucEl = document.getElementById('add-gold-ct-success');
+    errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+    if (!teamId || !cardTypeId || !name) { errEl.textContent = 'Team, Core Value, and Behavior Name are required.'; errEl.style.display = 'block'; return; }
+
+    const goldCardBehaviors = STORE.get('goldCardBehaviors') || [];
+    const newBehavior = { id: makeId(), teamId, cardTypeId, name, icon };
+    goldCardBehaviors.push(newBehavior);
+    STORE.set('goldCardBehaviors', goldCardBehaviors);
+
+    document.getElementById('new-gold-card-name').value = '';
+    document.getElementById('new-gold-card-icon').value = '';
+    sucEl.textContent = `✓ "${name}" gold behavior added successfully.`; sucEl.style.display = 'block';
+    setTimeout(() => sucEl.style.display = 'none', 3000);
+    renderAdminGoldCardBehaviors();
+}
+
+// Render Admin Gold Card Behaviors List
+function renderAdminGoldCardBehaviors() {
+    const goldCardBehaviors = STORE.get('goldCardBehaviors') || [];
+    const el = document.getElementById('admin-gold-card-list');
+    const emptyEl = document.getElementById('admin-gold-card-list-empty');
+
+    if (goldCardBehaviors.length === 0) {
+        el.innerHTML = '';
+        emptyEl.style.display = 'block';
+        return;
+    } else {
+        emptyEl.style.display = 'none';
+    }
+
+    // Group by team, then by cardType (core value)
+    const grouped = goldCardBehaviors.reduce((acc, behavior) => {
+        if (!acc[behavior.teamId]) acc[behavior.teamId] = {};
+        if (!acc[behavior.teamId][behavior.cardTypeId]) acc[behavior.teamId][behavior.cardTypeId] = [];
+        acc[behavior.teamId][behavior.cardTypeId].push(behavior);
+        return acc;
+    }, {});
+
+    let html = '';
+    for (const teamId in grouped) {
+        const team = getTeamById(teamId);
+        html += `<div class="gold-card-team-group">`;
+        html += `<h4>${team.icon} ${team.name}</h4>`;
+        for (const cardTypeId in grouped[teamId]) {
+            const cardType = getCardTypeInfo(cardTypeId);
+            html += `<div class="gold-card-value-group">`;
+            html += `<h5>${cardType.icon} ${cardType.name}</h5>`;
+            html += `<ul>`;
+            grouped[teamId][cardTypeId].forEach(behavior => {
+                html += `
+                    <li>
+                        <span><span class="gold-icon">${behavior.icon}</span> ${behavior.name}</span>
+                        <button class="btn btn-danger btn-sm" onclick="deleteGoldCardBehavior('${behavior.id}')">Remove</button>
+                    </li>`;
+            });
+            html += `</ul></div>`;
+        }
+        html += `</div>`;
+    }
+    el.innerHTML = html;
+}
+
+// Delete Gold Card Behavior
+function deleteGoldCardBehavior(id) {
+    if (!confirm('Remove this gold card behavior?')) return;
+    const goldCardBehaviors = (STORE.get('goldCardBehaviors') || []).filter(gb => gb.id !== id);
+    STORE.set('goldCardBehaviors', goldCardBehaviors);
+    renderAdminGoldCardBehaviors();
+}
+
+function addUser() {
+  const name = document.getElementById('new-user-name').value.trim();
+  const username = document.getElementById('new-user-username').value.trim();
+  const password = document.getElementById('new-user-password').value;
+  const role = document.getElementById('new-user-role').value;
+  const team = document.getElementById('new-user-team').value;
+  const errEl = document.getElementById('add-user-error');
+  const sucEl = document.getElementById('add-user-success');
+  errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+  if (!name || !username || !password) { errEl.textContent = 'All fields are required.'; errEl.style.display = 'block'; return; }
+  const users = STORE.get('users') || [];
+  if (users.find(u => u.username === username)) { errEl.textContent = 'Email address already exists.'; errEl.style.display = 'block'; return; }
+
+  const color = COLORS[users.length % COLORS.length];
+  users.push({ id: makeId(), name, username, password, role, team, color });
+  STORE.set('users', users);
+  document.getElementById('new-user-name').value = '';
+  document.getElementById('new-user-username').value = '';
+  document.getElementById('new-user-password').value = '';
+  sucEl.textContent = `✓ ${name} added successfully.`; sucEl.style.display = 'block';
+  setTimeout(() => sucEl.style.display = 'none', 3000);
+  renderAdminUserList();
+}
+
+function deleteUser(id) {
+  if (!confirm('Remove this user?')) return;
+  const users = (STORE.get('users') || []).filter(u => u.id !== id);
+  STORE.set('users', users);
+  renderAdminUserList();
+}
+
+function addCardType() {
+  const name = document.getElementById('new-card-type-name').value.trim();
+  const icon = document.getElementById('new-card-type-icon').value.trim() || '🃏';
+  const errEl = document.getElementById('add-ct-error');
+  errEl.style.display = 'none';
+  if (!name) { errEl.textContent = 'Card name is required.'; errEl.style.display = 'block'; return; }
+  const cardTypes = STORE.get('cardTypes') || [];
+  cardTypes.push({ id: makeId(), name, icon, cls: name.toLowerCase().replace(/\s/g, '-') }); // Generate a class based on name
+  STORE.set('cardTypes', cardTypes);
+  document.getElementById('new-card-type-name').value = '';
+  document.getElementById('new-card-type-icon').value = '';
+  renderAdminCardTypes();
+  renderGoldCardManagementForm(); // Update gold card form dropdown as well
+}
+
+function deleteCardType(id) {
+  if (!confirm('Remove this card type?')) return;
+  const cardTypes = (STORE.get('cardTypes') || []).filter(ct => ct.id !== id);
+  STORE.set('cardTypes', cardTypes);
+  renderAdminCardTypes();
+  renderGoldCardManagementForm(); // Update gold card form dropdown as well
+}
+
+function renderAdminAllCards() {
+  const cards = STORE.get('cards') || [];
+  const el = document.getElementById('admin-all-cards');
+  if (!cards.length) { el.innerHTML = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">📋</div><p>No cards assigned yet.</p></div>'; return; }
+  el.innerHTML = [...cards].reverse().map(c => {
+    let cardPillHtml;
+
+    if (c.isGoldCard) {
+        const goldBehavior = getGoldBehaviorInfo(c.goldBehaviorId);
+        const coreValue = getCardTypeInfo(goldBehavior.cardTypeId);
+        const team = getTeamById(goldBehavior.teamId);
+        cardPillHtml = `<span class="pill gold-behavior" title="Gold: ${coreValue.name} (${team.name})">${goldBehavior.icon} ${goldBehavior.name}</span>`;
+    } else {
+        const ct = getCardTypeInfo(c.typeId);
+        cardPillHtml = `<span class="pill ${pillCls(ct)}">${ct.icon} ${ct.name}</span>`;
+    }
+
+    const from = getUserById(c.fromId);
+    const to = getUserById(c.toId);
+    return `
+      <div class="card-item">
+        <div class="card-type">${cardPillHtml}</div>
+        <div class="card-meta" style="display:flex;gap:8px;align-items:center">
+          <span class="avatar" style="width:22px;height:22px;font-size:10px;background:${from.color||'#0F2C61'};color:#ffffff">${from.name.charAt(0)}</span>
+          ${from.name} → <span class="avatar" style="width:22px;height:22px;font-size:10px;background:${to.color||'#0F2C61'};color:#ffffff">${to.name.charAt(0)}</span> ${to.name}
+        </div>
+        ${c.note ? `<div class="card-note">"${c.note}"</div>` : ''}
+        <div class="card-date" style="display:flex;justify-content:space-between;align-items:center">
+          ${fmtDate(c.ts)}
+          <button class="btn btn-danger btn-sm" onclick="deleteCard('${c.id}')">Delete</button>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+function deleteCard(id) {
+  if (!confirm('Delete this card?')) return;
+  const cards = (STORE.get('cards') || []).filter(c => c.id !== id);
+  STORE.set('cards', cards);
+  renderAdminAllCards();
+}
+
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+initData();
 </script>
 </body>
 </html>
