@@ -6,6 +6,9 @@
 <title>Behaviours on Display - IBL Energy</title>
 <!-- Google Fonts: Permanent Marker for titles, DM Sans for app-like text -->
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Permanent+Marker&display=swap" rel="stylesheet">
+<!-- Firebase SDK -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
 <style>
   :root {
     --bg: #f0f4f8;
@@ -763,13 +766,52 @@
 
 <script>
 // ══════════════════════════════════════
-// DATA STORE (localStorage)
+// FIREBASE CONFIG
 // ══════════════════════════════════════
-const STORE_PREFIX = 'ibl_v5_'; // Updated prefix to ensure fresh data
-const STORE = {
-  get(key) { try { return JSON.parse(localStorage.getItem(STORE_PREFIX + key)); } catch { return null; } },
-  set(key, val) { localStorage.setItem(STORE_PREFIX + key, JSON.stringify(val)); }
+const firebaseConfig = {
+  apiKey: "AIzaSyC7hDnLKbJSdwjjBtj0RZ54I95LYE3C5Xg",
+  authDomain: "behaviours-on-display-31ca9.firebaseapp.com",
+  databaseURL: "https://behaviours-on-display-31ca9-default-rtdb.firebaseio.com",
+  projectId: "behaviours-on-display-31ca9",
+  storageBucket: "behaviours-on-display-31ca9.firebasestorage.app",
+  messagingSenderId: "136471166220",
+  appId: "1:136471166220:web:0c0e053312a90e41ca1d29"
 };
+firebase.initializeApp(firebaseConfig);
+const db = firebase.database();
+
+// ══════════════════════════════════════
+// DATA STORE (localStorage + Firebase sync)
+// ══════════════════════════════════════
+const STORE_PREFIX = 'ibl_v5_';
+const STORE = {
+  get(key) {
+    try { return JSON.parse(localStorage.getItem(STORE_PREFIX + key)); } catch { return null; }
+  },
+  set(key, val) {
+    localStorage.setItem(STORE_PREFIX + key, JSON.stringify(val));
+    // Sync to Firebase (fire-and-forget)
+    db.ref('appData/' + key).set(val).catch(err => console.warn('Firebase write error:', err));
+  }
+};
+
+// Load all data from Firebase into localStorage
+async function loadFromFirebase() {
+  try {
+    const snapshot = await db.ref('appData').once('value');
+    const data = snapshot.val();
+    if (data) {
+      for (const key in data) {
+        localStorage.setItem(STORE_PREFIX + key, JSON.stringify(data[key]));
+      }
+      return true; // data loaded from Firebase
+    }
+    return false; // no data in Firebase yet
+  } catch (err) {
+    console.warn('Firebase read error:', err);
+    return false;
+  }
+}
 
 function initData() {
   if (!STORE.get('users')) {
@@ -1802,9 +1844,34 @@ function buildFlipCardHtml(images, label, isGiven, recipient, ts) {
 }
 
 // ══════════════════════════════════════
-// INIT
+// INIT (load from Firebase first, then init defaults)
 // ══════════════════════════════════════
-initData();
+(async function startApp() {
+  // Show a brief loading indicator
+  const authScreen = document.getElementById('auth-screen');
+  const authBox = authScreen.querySelector('.auth-box');
+  const loadingMsg = document.createElement('div');
+  loadingMsg.style.cssText = 'text-align:center;color:var(--muted);font-size:13px;margin-top:12px;font-weight:500';
+  loadingMsg.textContent = 'Loading data...';
+  authBox.appendChild(loadingMsg);
+
+  // Load persisted data from Firebase
+  const loaded = await loadFromFirebase();
+
+  // Initialize defaults if no data exists
+  initData();
+
+  // If this is the first ever load, push defaults to Firebase
+  if (!loaded) {
+    const keys = ['users','cardTypes','cards','goldCardBehaviors','cardImages','cardCategories','goldCardCategories'];
+    keys.forEach(key => {
+      const val = STORE.get(key);
+      if (val !== null) db.ref('appData/' + key).set(val).catch(() => {});
+    });
+  }
+
+  loadingMsg.remove();
+})();
 </script>
 </body>
 </html>
