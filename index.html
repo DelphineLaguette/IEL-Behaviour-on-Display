@@ -7,8 +7,8 @@
 <!-- Google Fonts: Permanent Marker for titles, DM Sans for app-like text -->
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,400;0,500;0,700;1,400&family=Permanent+Marker&display=swap" rel="stylesheet">
 <!-- Firebase SDK -->
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-database-compat.js"></script>
 <style>
   :root {
     --bg: #f0f4f8;
@@ -804,11 +804,19 @@ async function loadFromFirebase() {
       for (const key in data) {
         localStorage.setItem(STORE_PREFIX + key, JSON.stringify(data[key]));
       }
-      return true; // data loaded from Firebase
+      console.log('Firebase: data loaded successfully', Object.keys(data));
+      return true;
     }
-    return false; // no data in Firebase yet
+    console.log('Firebase: no data found, will push defaults');
+    return false;
   } catch (err) {
-    console.warn('Firebase read error:', err);
+    console.error('Firebase read error:', err);
+    // Show error to user
+    const errDiv = document.createElement('div');
+    errDiv.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;font-family:sans-serif';
+    errDiv.textContent = 'Firebase connection error: ' + err.message;
+    document.body.appendChild(errDiv);
+    setTimeout(() => errDiv.remove(), 8000);
     return false;
   }
 }
@@ -1851,8 +1859,9 @@ function buildFlipCardHtml(images, label, isGiven, recipient, ts) {
   const authScreen = document.getElementById('auth-screen');
   const authBox = authScreen.querySelector('.auth-box');
   const loadingMsg = document.createElement('div');
+  loadingMsg.id = 'loading-msg';
   loadingMsg.style.cssText = 'text-align:center;color:var(--muted);font-size:13px;margin-top:12px;font-weight:500';
-  loadingMsg.textContent = 'Loading data...';
+  loadingMsg.textContent = 'Connecting to database...';
   authBox.appendChild(loadingMsg);
 
   // Load persisted data from Firebase
@@ -1861,13 +1870,17 @@ function buildFlipCardHtml(images, label, isGiven, recipient, ts) {
   // Initialize defaults if no data exists
   initData();
 
-  // If this is the first ever load, push defaults to Firebase
+  // If this is the first ever load, push all defaults to Firebase
   if (!loaded) {
+    loadingMsg.textContent = 'Setting up database...';
     const keys = ['users','cardTypes','cards','goldCardBehaviors','cardImages','cardCategories','goldCardCategories'];
-    keys.forEach(key => {
+    const pushPromises = keys.map(key => {
       const val = STORE.get(key);
-      if (val !== null) db.ref('appData/' + key).set(val).catch(() => {});
+      if (val !== null) return db.ref('appData/' + key).set(val).catch(err => console.error('Push error for ' + key + ':', err));
+      return Promise.resolve();
     });
+    await Promise.all(pushPromises);
+    console.log('Firebase: defaults pushed');
   }
 
   loadingMsg.remove();
