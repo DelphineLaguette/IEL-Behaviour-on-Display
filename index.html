@@ -32,7 +32,7 @@
   }
   
   /* Apply Permanent Marker to specified titles */
-  .auth-logo, .nav-logo, .page-header h2, .stat-value, .rank { 
+  .auth-logo, .nav-logo, .page-header h2, .stat-value {
     font-family: 'Permanent Marker', cursive; 
     font-weight: normal; /* Permanent Marker is typically one weight */
   }
@@ -242,7 +242,8 @@
   .lb-row:hover { background: var(--surface2); }
   .lb-row.me { background: rgba(15,44,97,0.05); }
   .rank {
-    font-size: 20px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 20px; font-weight: 700;
     width: 32px; text-align: center; color: var(--muted);
   }
   .rank.gold { color: var(--accent); }
@@ -374,7 +375,12 @@
   .card-display-summary .summary-card { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 18px 24px; min-width: 160px; }
   .card-display-summary .summary-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); font-weight: 700; margin-bottom: 6px; }
   .card-display-summary .summary-value { font-family: 'Permanent Marker', cursive; font-size: 32px; }
-  .cards-display-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 24px; }
+  .cards-display-grid { display: grid; grid-template-columns: 1fr; gap: 0; }
+
+  /* ── CATEGORY ROW ── */
+  .category-section { margin-bottom: 28px; }
+  .category-section h3 { font-family: 'DM Sans', sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 14px; color: var(--text); display: flex; align-items: center; gap: 8px; }
+  .category-cards-row { display: grid; grid-template-columns: repeat(3, 220px); gap: 20px; justify-content: start; }
 
   /* ── FLIP CARD ── */
   .flip-card { width: 220px; height: 310px; perspective: 800px; cursor: pointer; margin: 0 auto; }
@@ -415,8 +421,8 @@
     .give-card-box { padding: 20px; }
     .card-type-grid { grid-template-columns: 1fr; }
     .stats-strip { grid-template-columns: 1fr 1fr; }
-    .cards-display-grid { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
-    .flip-card { width: 160px; height: 225px; }
+    .category-cards-row { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+    .flip-card { width: 100%; max-width: 160px; height: 225px; }
   }
 </style>
 </head>
@@ -622,30 +628,14 @@
         <!-- Add Card Type (General Values) -->
         <div class="admin-panel">
           <h3>🃏 Add General Card Type</h3>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:15px;">These represent your 5 core values. Upload PNG images for front (recto) and back (verso) of the card.</p>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:15px;">These represent your 5 core values (Pioneer, Purposeful, etc.)</p>
           <div class="form-group">
             <label>Card Name</label>
-            <input type="text" id="new-card-type-name" placeholder="e.g. Creative Thinker">
+            <input type="text" id="new-card-type-name" placeholder="e.g. Pioneer">
           </div>
           <div class="form-group">
             <label>Emoji Icon</label>
-            <input type="text" id="new-card-type-icon" placeholder="e.g. 💡">
-          </div>
-          <div class="form-group">
-            <label>Cards per User</label>
-            <input type="number" id="new-card-type-count" placeholder="e.g. 5" value="5" min="1" max="20" style="width:120px">
-          </div>
-          <div class="img-upload-group">
-            <div class="img-upload-box">
-              <label>Card Front (Recto) PNG</label>
-              <input type="file" id="new-card-type-front" accept="image/png,image/jpeg,image/webp" onchange="previewCardImage(this, 'preview-front')">
-              <div class="img-preview" id="preview-front"><span class="placeholder-text">Front</span></div>
-            </div>
-            <div class="img-upload-box">
-              <label>Card Back (Verso) PNG</label>
-              <input type="file" id="new-card-type-back" accept="image/png,image/jpeg,image/webp" onchange="previewCardImage(this, 'preview-back')">
-              <div class="img-preview" id="preview-back"><span class="placeholder-text">Back</span></div>
-            </div>
+            <input type="text" id="new-card-type-icon" placeholder="e.g. 🚀">
           </div>
           <div class="alert error" id="add-ct-error"></div>
           <button class="btn btn-primary" onclick="addCardType()">Add Card Type</button>
@@ -654,8 +644,49 @@
         <!-- General Card Types List -->
         <div class="admin-panel">
           <h3>📋 General Card Types</h3>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:15px;">Upload or update front/back images for each card type.</p>
           <div id="admin-card-types-list"></div>
+        </div>
+
+        <!-- Add Card Category (sub-types under each value) -->
+        <div class="admin-panel" style="grid-column: 1 / -1;">
+          <h3>🎴 Add Card Category</h3>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:15px;">Add card categories under each value (e.g. "Decision Making" under Pioneer). Each category gives users 3 cards. Upload PNG recto and verso for the card.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+              <div class="form-group">
+                <label>Select Value</label>
+                <select id="new-cat-value"></select>
+              </div>
+              <div class="form-group">
+                <label>Category Name</label>
+                <input type="text" id="new-cat-name" placeholder="e.g. Decision Making">
+              </div>
+            </div>
+            <div>
+              <div class="img-upload-group">
+                <div class="img-upload-box">
+                  <label>Card Front (Recto) PNG</label>
+                  <input type="file" id="new-cat-front" accept="image/png,image/jpeg,image/webp" onchange="previewCardImage(this, 'preview-cat-front')">
+                  <div class="img-preview" id="preview-cat-front"><span class="placeholder-text">Front</span></div>
+                </div>
+                <div class="img-upload-box">
+                  <label>Card Back (Verso) PNG</label>
+                  <input type="file" id="new-cat-back" accept="image/png,image/jpeg,image/webp" onchange="previewCardImage(this, 'preview-cat-back')">
+                  <div class="img-preview" id="preview-cat-back"><span class="placeholder-text">Back</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="alert error" id="add-cat-error"></div>
+          <div class="alert success" id="add-cat-success"></div>
+          <button class="btn btn-primary" onclick="addCardCategory()" style="width:auto">Add Category</button>
+        </div>
+
+        <!-- Card Categories List -->
+        <div class="admin-panel" style="grid-column: 1 / -1;">
+          <h3>📋 Card Categories by Value</h3>
+          <div id="admin-card-categories-list"></div>
+          <div class="empty" id="admin-card-categories-empty" style="display:none"><div class="empty-icon">🎴</div><p>No card categories defined yet.</p></div>
         </div>
 
         <!-- NEW: Manage Gold Card Behaviors -->
@@ -759,6 +790,7 @@ function initData() {
   if (!STORE.get('cards')) { STORE.set('cards', []); }
   if (!STORE.get('goldCardBehaviors')) { STORE.set('goldCardBehaviors', []); }
   if (!STORE.get('cardImages')) { STORE.set('cardImages', {}); }
+  if (!STORE.get('cardCategories')) { STORE.set('cardCategories', []); }
 }
 
 // ══════════════════════════════════════
@@ -970,16 +1002,11 @@ function renderGiveForm() {
   const generalCardTypes = STORE.get('cardTypes') || [];
   const clsList = ['pioneer','purposeful','excellence','reliable','sustainable'];
   const generalGrid = document.getElementById('general-card-type-grid');
-  generalGrid.innerHTML = generalCardTypes.map((ct, i) => {
-    const cardImages = STORE.get('cardImages') || {};
-    const hasImg = cardImages[ct.id] && cardImages[ct.id].front;
-    const imgPreview = hasImg ? `<img src="${cardImages[ct.id].front}" style="width:40px;height:56px;object-fit:cover;border-radius:4px;margin-bottom:4px">` : `<span class="ct-icon">${ct.icon}</span>`;
-    return `
+  generalGrid.innerHTML = generalCardTypes.map((ct, i) => `
     <button class="card-type-btn ${clsList[i % clsList.length]}" onclick="openCardDisplay('${ct.id}')" data-id="${ct.id}">
-      ${imgPreview}
+      <span class="ct-icon">${ct.icon}</span>
       <span class="ct-label">${ct.name}</span>
-    </button>`;
-  }).join('');
+    </button>`).join('');
 
   const goldBehaviors = STORE.get('goldCardBehaviors') || [];
   const goldSelect = document.getElementById('give-gold-behavior');
@@ -1144,6 +1171,8 @@ function showMyTab(tab) {
 function renderAdmin() {
   renderAdminUserList();
   renderAdminCardTypes();
+  renderCategoryFormDropdown();
+  renderAdminCardCategories();
   renderGoldCardManagementForm();
   renderAdminGoldCardBehaviors();
   renderAdminAllCards();
@@ -1167,40 +1196,16 @@ function renderAdminUserList() {
 
 function renderAdminCardTypes() {
   const cardTypes = STORE.get('cardTypes') || [];
-  const cardImages = STORE.get('cardImages') || {};
+  const categories = STORE.get('cardCategories') || [];
   const el = document.getElementById('admin-card-types-list');
   el.innerHTML = cardTypes.map(ct => {
-    const imgs = cardImages[ct.id] || {};
-    const frontThumb = imgs.front ? `<img src="${imgs.front}" style="width:40px;height:56px;object-fit:cover;border-radius:4px">` : '<span style="font-size:10px;color:var(--muted)">No front</span>';
-    const backThumb = imgs.back ? `<img src="${imgs.back}" style="width:40px;height:56px;object-fit:cover;border-radius:4px">` : '<span style="font-size:10px;color:var(--muted)">No back</span>';
+    const catCount = categories.filter(c => c.cardTypeId === ct.id).length;
     return `
-    <div style="padding:12px 0;border-bottom:1px solid var(--border)">
-      <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px">
-        <span>${ct.icon}</span>
-        <span class="ct-name" style="flex:1;font-size:14px;font-weight:700">${ct.name}</span>
-        <span style="font-size:11px;color:var(--muted)">Cards/user: ${ct.cardsPerUser || 5}</span>
-        <button class="btn btn-danger btn-sm" onclick="deleteCardType('${ct.id}')">Remove</button>
-      </div>
-      <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap">
-        <div style="display:flex;gap:8px;align-items:center">
-          ${frontThumb} ${backThumb}
-        </div>
-        <div style="display:flex;gap:8px;align-items:flex-end;flex:1;flex-wrap:wrap">
-          <div style="font-size:11px">
-            <div style="color:var(--muted);margin-bottom:2px">Front:</div>
-            <input type="file" id="img-front-${ct.id}" accept="image/png,image/jpeg,image/webp" style="font-size:11px;width:130px">
-          </div>
-          <div style="font-size:11px">
-            <div style="color:var(--muted);margin-bottom:2px">Back:</div>
-            <input type="file" id="img-back-${ct.id}" accept="image/png,image/jpeg,image/webp" style="font-size:11px;width:130px">
-          </div>
-          <div style="font-size:11px">
-            <div style="color:var(--muted);margin-bottom:2px">Cards/user:</div>
-            <input type="number" id="cpu-${ct.id}" value="${ct.cardsPerUser || 5}" min="1" max="50" style="width:60px;font-size:12px;padding:4px;border-radius:6px;border:1px solid var(--border)">
-          </div>
-          <button class="btn btn-secondary btn-sm" onclick="uploadCardImages('${ct.id}'); updateCardsPerUser('${ct.id}')">Save</button>
-        </div>
-      </div>
+    <div class="card-type-list-item">
+      <span>${ct.icon}</span>
+      <span class="ct-name">${ct.name}</span>
+      <span style="font-size:11px;color:var(--muted)">${catCount} categories</span>
+      <button class="btn btn-danger btn-sm" onclick="deleteCardType('${ct.id}')">Remove</button>
     </div>`;
   }).join('');
 }
@@ -1325,53 +1330,41 @@ function deleteUser(id) {
   renderAdminUserList();
 }
 
-async function addCardType() {
+function addCardType() {
   const name = document.getElementById('new-card-type-name').value.trim();
   const icon = document.getElementById('new-card-type-icon').value.trim() || '🃏';
-  const cardsPerUser = parseInt(document.getElementById('new-card-type-count').value) || 5;
-  const frontInput = document.getElementById('new-card-type-front');
-  const backInput = document.getElementById('new-card-type-back');
   const errEl = document.getElementById('add-ct-error');
   errEl.style.display = 'none';
   if (!name) { errEl.textContent = 'Card name is required.'; errEl.style.display = 'block'; return; }
-
-  const newId = makeId();
   const cardTypes = STORE.get('cardTypes') || [];
-  cardTypes.push({ id: newId, name, icon, cls: name.toLowerCase().replace(/\s/g, '-'), cardsPerUser });
+  cardTypes.push({ id: makeId(), name, icon, cls: name.toLowerCase().replace(/\s/g, '-') });
   STORE.set('cardTypes', cardTypes);
-
-  // Save images if provided
-  const cardImages = STORE.get('cardImages') || {};
-  cardImages[newId] = {};
-  if (frontInput.files && frontInput.files[0]) {
-    cardImages[newId].front = await readFileAsDataURL(frontInput.files[0]);
-  }
-  if (backInput.files && backInput.files[0]) {
-    cardImages[newId].back = await readFileAsDataURL(backInput.files[0]);
-  }
-  STORE.set('cardImages', cardImages);
-
   document.getElementById('new-card-type-name').value = '';
   document.getElementById('new-card-type-icon').value = '';
-  document.getElementById('new-card-type-count').value = '5';
-  frontInput.value = '';
-  backInput.value = '';
-  document.getElementById('preview-front').innerHTML = '<span class="placeholder-text">Front</span>';
-  document.getElementById('preview-back').innerHTML = '<span class="placeholder-text">Back</span>';
   renderAdminCardTypes();
   renderGoldCardManagementForm();
+  renderAdminCardCategories();
+  renderCategoryFormDropdown();
 }
 
 function deleteCardType(id) {
-  if (!confirm('Remove this card type?')) return;
+  if (!confirm('Remove this card type and all its categories?')) return;
   const cardTypes = (STORE.get('cardTypes') || []).filter(ct => ct.id !== id);
   STORE.set('cardTypes', cardTypes);
-  // Clean up images
+  // Clean up categories and their images
+  const categories = (STORE.get('cardCategories') || []).filter(c => c.cardTypeId !== id);
+  STORE.set('cardCategories', categories);
   const cardImages = STORE.get('cardImages') || {};
   delete cardImages[id];
+  // Also delete category images that belonged to this type
+  Object.keys(cardImages).forEach(k => {
+    if (!categories.find(c => c.id === k)) delete cardImages[k];
+  });
   STORE.set('cardImages', cardImages);
   renderAdminCardTypes();
   renderGoldCardManagementForm();
+  renderAdminCardCategories();
+  renderCategoryFormDropdown();
 }
 
 function renderAdminAllCards() {
@@ -1439,35 +1432,125 @@ function readFileAsDataURL(file) {
   });
 }
 
-// Upload images for an existing card type
-async function uploadCardImages(cardTypeId) {
-  const frontInput = document.getElementById('img-front-' + cardTypeId);
-  const backInput = document.getElementById('img-back-' + cardTypeId);
-  const cardImages = STORE.get('cardImages') || {};
-  if (!cardImages[cardTypeId]) cardImages[cardTypeId] = {};
-
-  if (frontInput.files && frontInput.files[0]) {
-    cardImages[cardTypeId].front = await readFileAsDataURL(frontInput.files[0]);
-  }
-  if (backInput.files && backInput.files[0]) {
-    cardImages[cardTypeId].back = await readFileAsDataURL(backInput.files[0]);
-  }
-  STORE.set('cardImages', cardImages);
-  renderAdminCardTypes();
-  alert('Card images updated!');
+// ══════════════════════════════════════
+// CARD CATEGORIES (sub-types per value)
+// ══════════════════════════════════════
+function renderCategoryFormDropdown() {
+  const cardTypes = STORE.get('cardTypes') || [];
+  const sel = document.getElementById('new-cat-value');
+  if (sel) sel.innerHTML = cardTypes.map(ct => `<option value="${ct.id}">${ct.icon} ${ct.name}</option>`).join('');
 }
 
-// Update cards per user for a card type
-function updateCardsPerUser(cardTypeId) {
-  const input = document.getElementById('cpu-' + cardTypeId);
-  const val = parseInt(input.value) || 5;
-  const cardTypes = STORE.get('cardTypes') || [];
-  const ct = cardTypes.find(c => c.id === cardTypeId);
-  if (ct) {
-    ct.cardsPerUser = val;
-    STORE.set('cardTypes', cardTypes);
-    alert('Cards per user updated to ' + val);
+async function addCardCategory() {
+  const cardTypeId = document.getElementById('new-cat-value').value;
+  const name = document.getElementById('new-cat-name').value.trim();
+  const frontInput = document.getElementById('new-cat-front');
+  const backInput = document.getElementById('new-cat-back');
+  const errEl = document.getElementById('add-cat-error');
+  const sucEl = document.getElementById('add-cat-success');
+  errEl.style.display = 'none'; sucEl.style.display = 'none';
+
+  if (!cardTypeId || !name) { errEl.textContent = 'Please select a value and enter a category name.'; errEl.style.display = 'block'; return; }
+
+  const newId = makeId();
+  const categories = STORE.get('cardCategories') || [];
+  categories.push({ id: newId, cardTypeId, name });
+  STORE.set('cardCategories', categories);
+
+  // Save images
+  const cardImages = STORE.get('cardImages') || {};
+  cardImages[newId] = {};
+  if (frontInput.files && frontInput.files[0]) {
+    cardImages[newId].front = await readFileAsDataURL(frontInput.files[0]);
   }
+  if (backInput.files && backInput.files[0]) {
+    cardImages[newId].back = await readFileAsDataURL(backInput.files[0]);
+  }
+  STORE.set('cardImages', cardImages);
+
+  document.getElementById('new-cat-name').value = '';
+  frontInput.value = '';
+  backInput.value = '';
+  document.getElementById('preview-cat-front').innerHTML = '<span class="placeholder-text">Front</span>';
+  document.getElementById('preview-cat-back').innerHTML = '<span class="placeholder-text">Back</span>';
+  const ct = getCardTypeInfo(cardTypeId);
+  sucEl.textContent = `"${name}" added under ${ct.name}.`; sucEl.style.display = 'block';
+  setTimeout(() => sucEl.style.display = 'none', 3000);
+  renderAdminCardCategories();
+  renderAdminCardTypes();
+}
+
+function deleteCardCategory(id) {
+  if (!confirm('Remove this card category?')) return;
+  const categories = (STORE.get('cardCategories') || []).filter(c => c.id !== id);
+  STORE.set('cardCategories', categories);
+  const cardImages = STORE.get('cardImages') || {};
+  delete cardImages[id];
+  STORE.set('cardImages', cardImages);
+  renderAdminCardCategories();
+  renderAdminCardTypes();
+}
+
+async function updateCategoryImages(catId) {
+  const frontInput = document.getElementById('cat-front-' + catId);
+  const backInput = document.getElementById('cat-back-' + catId);
+  const cardImages = STORE.get('cardImages') || {};
+  if (!cardImages[catId]) cardImages[catId] = {};
+  if (frontInput && frontInput.files && frontInput.files[0]) {
+    cardImages[catId].front = await readFileAsDataURL(frontInput.files[0]);
+  }
+  if (backInput && backInput.files && backInput.files[0]) {
+    cardImages[catId].back = await readFileAsDataURL(backInput.files[0]);
+  }
+  STORE.set('cardImages', cardImages);
+  renderAdminCardCategories();
+  alert('Images updated!');
+}
+
+function renderAdminCardCategories() {
+  const categories = STORE.get('cardCategories') || [];
+  const cardImages = STORE.get('cardImages') || {};
+  const el = document.getElementById('admin-card-categories-list');
+  const emptyEl = document.getElementById('admin-card-categories-empty');
+
+  if (categories.length === 0) {
+    el.innerHTML = '';
+    emptyEl.style.display = 'block';
+    return;
+  }
+  emptyEl.style.display = 'none';
+
+  // Group by card type
+  const grouped = {};
+  categories.forEach(cat => {
+    if (!grouped[cat.cardTypeId]) grouped[cat.cardTypeId] = [];
+    grouped[cat.cardTypeId].push(cat);
+  });
+
+  let html = '';
+  for (const typeId in grouped) {
+    const ct = getCardTypeInfo(typeId);
+    html += `<div class="gold-card-team-group">`;
+    html += `<h4>${ct.icon} ${ct.name}</h4>`;
+    grouped[typeId].forEach(cat => {
+      const imgs = cardImages[cat.id] || {};
+      const frontThumb = imgs.front ? `<img src="${imgs.front}" style="width:36px;height:50px;object-fit:cover;border-radius:4px">` : '<span style="font-size:10px;color:var(--muted)">No img</span>';
+      const backThumb = imgs.back ? `<img src="${imgs.back}" style="width:36px;height:50px;object-fit:cover;border-radius:4px">` : '<span style="font-size:10px;color:var(--muted)">No img</span>';
+      html += `
+        <div style="display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px dotted var(--border);flex-wrap:wrap">
+          <span style="font-weight:700;flex:1;min-width:120px">${cat.name}</span>
+          <div style="display:flex;gap:6px;align-items:center">${frontThumb} ${backThumb}</div>
+          <div style="display:flex;gap:6px;align-items:flex-end">
+            <div style="font-size:11px"><div style="color:var(--muted)">Front:</div><input type="file" id="cat-front-${cat.id}" accept="image/png,image/jpeg,image/webp" style="font-size:10px;width:110px"></div>
+            <div style="font-size:11px"><div style="color:var(--muted)">Back:</div><input type="file" id="cat-back-${cat.id}" accept="image/png,image/jpeg,image/webp" style="font-size:10px;width:110px"></div>
+            <button class="btn btn-secondary btn-sm" onclick="updateCategoryImages('${cat.id}')">Save</button>
+          </div>
+          <button class="btn btn-danger btn-sm" onclick="deleteCardCategory('${cat.id}')">Remove</button>
+        </div>`;
+    });
+    html += `</div>`;
+  }
+  el.innerHTML = html;
 }
 
 // ══════════════════════════════════════
@@ -1483,16 +1566,7 @@ function openCardDisplay(cardTypeId) {
 
 function giveFromDisplay() {
   if (!currentDisplayCardTypeId) return;
-  const ct = getCardTypeInfo(currentDisplayCardTypeId);
-  const cardsPerUser = ct.cardsPerUser || 5;
-  const allCards = STORE.get('cards') || [];
-  const givenCards = allCards.filter(c => c.fromId === currentUser.id && c.typeId === currentDisplayCardTypeId && !c.isGoldCard);
-  if (givenCards.length >= cardsPerUser) {
-    alert('You have no remaining ' + ct.name + ' cards to give.');
-    return;
-  }
   showView('give');
-  // Pre-select this card type
   setTimeout(() => {
     const clsList = ['pioneer','purposeful','excellence','reliable','sustainable'];
     const cardTypes = STORE.get('cardTypes') || [];
@@ -1505,64 +1579,85 @@ function giveFromDisplay() {
 
 function renderCardDisplay(cardTypeId) {
   const ct = getCardTypeInfo(cardTypeId);
+  const categories = (STORE.get('cardCategories') || []).filter(c => c.cardTypeId === cardTypeId);
   const cardImages = STORE.get('cardImages') || {};
-  const images = cardImages[cardTypeId] || {};
-  const cardsPerUser = ct.cardsPerUser || 5;
-
-  // Get cards given by current user for this card type
   const allCards = STORE.get('cards') || [];
-  const givenCards = allCards.filter(c => c.fromId === currentUser.id && c.typeId === cardTypeId && !c.isGoldCard);
-  const remaining = Math.max(0, cardsPerUser - givenCards.length);
+  const CARDS_PER_CATEGORY = 3;
 
   // Title
   document.getElementById('card-display-title').textContent = ct.icon + ' ' + ct.name + ' Cards';
   document.getElementById('card-display-subtitle').textContent = 'Click any card to flip it and see the back';
 
+  // Count totals across all categories
+  const givenForType = allCards.filter(c => c.fromId === currentUser.id && c.typeId === cardTypeId && !c.isGoldCard);
+  const totalCards = categories.length * CARDS_PER_CATEGORY;
+  const totalGiven = givenForType.length;
+  const totalRemaining = Math.max(0, totalCards - totalGiven);
+
   // Summary
   document.getElementById('card-display-summary').innerHTML = `
     <div class="summary-card">
-      <div class="summary-label">Total Allocated</div>
-      <div class="summary-value" style="color:var(--accent)">${cardsPerUser}</div>
+      <div class="summary-label">Categories</div>
+      <div class="summary-value" style="color:var(--accent)">${categories.length}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Total Cards</div>
+      <div class="summary-value" style="color:var(--accent)">${totalCards}</div>
     </div>
     <div class="summary-card">
       <div class="summary-label">Given Away</div>
-      <div class="summary-value" style="color:var(--accent2)">${givenCards.length}</div>
+      <div class="summary-value" style="color:var(--accent2)">${totalGiven}</div>
     </div>
     <div class="summary-card">
       <div class="summary-label">Remaining</div>
-      <div class="summary-value" style="color:var(--accent3)">${remaining}</div>
+      <div class="summary-value" style="color:var(--accent3)">${totalRemaining}</div>
     </div>
   `;
 
-  // Build card grid
+  // Build category sections
   let gridHtml = '';
 
-  // Render given cards first (grayscale with recipient name)
-  givenCards.forEach(c => {
-    const recipient = getUserById(c.toId);
-    gridHtml += buildFlipCardHtml(images, ct, true, recipient, c.ts);
+  if (categories.length === 0) {
+    gridHtml = '<div class="empty"><div class="empty-icon">🎴</div><p>No card categories defined for ' + ct.name + ' yet.<br>Ask your admin to add categories.</p></div>';
+  }
+
+  // Distribute given cards across categories (round-robin or by categoryId if tracked)
+  // For simplicity, given cards are assigned to categories in order
+  let givenIndex = 0;
+
+  categories.forEach(cat => {
+    const images = cardImages[cat.id] || {};
+    gridHtml += `<div class="category-section">`;
+    gridHtml += `<h3>${cat.name}</h3>`;
+    gridHtml += `<div class="category-cards-row">`;
+
+    for (let i = 0; i < CARDS_PER_CATEGORY; i++) {
+      if (givenIndex < givenForType.length) {
+        // This card has been given
+        const c = givenForType[givenIndex];
+        const recipient = getUserById(c.toId);
+        gridHtml += buildFlipCardHtml(images, cat.name, true, recipient, c.ts);
+        givenIndex++;
+      } else {
+        // Available card
+        gridHtml += buildFlipCardHtml(images, cat.name, false, null, null);
+      }
+    }
+
+    gridHtml += `</div></div>`;
   });
-
-  // Render remaining available cards
-  for (let i = 0; i < remaining; i++) {
-    gridHtml += buildFlipCardHtml(images, ct, false, null, null);
-  }
-
-  if (cardsPerUser === 0 && givenCards.length === 0) {
-    gridHtml = '<div class="empty" style="grid-column:1/-1"><div class="empty-icon">🃏</div><p>No cards allocated for this type.</p></div>';
-  }
 
   document.getElementById('card-display-grid').innerHTML = gridHtml;
 }
 
-function buildFlipCardHtml(images, ct, isGiven, recipient, ts) {
+function buildFlipCardHtml(images, label, isGiven, recipient, ts) {
   const givenClass = isGiven ? 'given' : 'available';
   const frontContent = images.front
-    ? `<img src="${images.front}" alt="${ct.name} front">`
-    : `<div class="card-placeholder">${ct.icon}</div><div class="card-placeholder-label">${ct.name}<br>Front</div>`;
+    ? `<img src="${images.front}" alt="${label} front">`
+    : `<div class="card-placeholder">🎴</div><div class="card-placeholder-label">${label}<br>Front</div>`;
   const backContent = images.back
-    ? `<img src="${images.back}" alt="${ct.name} back">`
-    : `<div class="card-placeholder">${ct.icon}</div><div class="card-placeholder-label">${ct.name}<br>Back</div>`;
+    ? `<img src="${images.back}" alt="${label} back">`
+    : `<div class="card-placeholder">🎴</div><div class="card-placeholder-label">${label}<br>Back</div>`;
 
   let recipientOverlay = '';
   if (isGiven && recipient) {
