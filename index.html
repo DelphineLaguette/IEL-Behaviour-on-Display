@@ -393,13 +393,13 @@
   .flip-card-front .card-placeholder-label, .flip-card-back .card-placeholder-label { font-size: 12px; color: var(--muted); margin-top: 8px; font-weight: 700; text-transform: uppercase; }
 
   /* Given card: grayscale + recipient overlay */
-  .flip-card.given .flip-card-front img, .flip-card.given .flip-card-back img { filter: grayscale(100%); opacity: 0.6; }
+  .flip-card.given .flip-card-front img, .flip-card.given .flip-card-back img { filter: grayscale(100%); opacity: 0.5; }
   .flip-card.given .flip-card-front .card-placeholder, .flip-card.given .flip-card-back .card-placeholder { filter: grayscale(100%); opacity: 0.15; }
-  .flip-card.given .flip-card-inner { border-color: var(--border); }
-  .card-recipient-overlay { position: absolute; bottom: 0; left: 0; right: 0; background: linear-gradient(transparent, rgba(15,44,97,0.85)); color: #fff; padding: 16px 12px 12px; text-align: center; z-index: 2; }
-  .card-recipient-overlay .recipient-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.8; margin-bottom: 4px; }
-  .card-recipient-overlay .recipient-name { font-size: 14px; font-weight: 700; }
-  .card-recipient-overlay .recipient-date { font-size: 10px; opacity: 0.7; margin-top: 4px; }
+  .flip-card.given .flip-card-front, .flip-card.given .flip-card-back { border-color: #b0b8c4; }
+  .card-recipient-overlay { position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(15,44,97,0.45); color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; z-index: 2; padding: 12px; }
+  .card-recipient-overlay .recipient-label { font-size: 10px; text-transform: uppercase; letter-spacing: 1px; opacity: 0.85; margin-bottom: 4px; }
+  .card-recipient-overlay .recipient-name { font-size: 15px; font-weight: 700; text-shadow: 0 1px 4px rgba(0,0,0,0.4); }
+  .card-recipient-overlay .recipient-date { font-size: 10px; opacity: 0.75; margin-top: 6px; }
 
   /* Available card glow */
   .flip-card.available .flip-card-front, .flip-card.available .flip-card-back { border-color: var(--accent3); box-shadow: 0 4px 16px rgba(0,208,218,0.15); }
@@ -479,8 +479,8 @@
     <!-- ── DASHBOARD ── -->
     <div class="view active" id="view-dashboard">
       <div class="page-header">
-        <h2>Team Dashboards</h2>
-        <p>Recognition leaderboards by team</p>
+        <h2>Capability Team Dashboards</h2>
+        <p>Recognition leaderboards by capability team</p>
       </div>
       <div class="team-tabs" id="team-tabs">
         <button class="team-tab active" onclick="showTeamTab('business-growth', this)">📈 Business Growth</button>
@@ -514,7 +514,7 @@
             </div>
             <div>
                 <input type="radio" id="card-category-gold" name="card-category" value="gold" onchange="toggleCardSelection()">
-                <label for="card-category-gold" style="display: inline-block; text-transform: none; font-weight: normal; letter-spacing: normal;">Team-Specific Gold Behavior</label>
+                <label for="card-category-gold" style="display: inline-block; text-transform: none; font-weight: normal; letter-spacing: normal;">Capability Team Gold Card</label>
             </div>
           </div>
         </div>
@@ -525,10 +525,10 @@
           <div class="card-type-grid" id="general-card-type-grid"></div>
         </div>
 
-        <!-- Gold Behavior Card Selection List (Initially Hidden) -->
+        <!-- Gold Card Value Selection (Initially Hidden) -->
         <div class="form-group" id="gold-card-selection" style="display:none;">
-          <label>Select Gold Behavior</label>
-          <select id="give-gold-behavior" class="form-control" onchange="selectGoldCardType(this.value)"></select>
+          <label>Select Core Value <span style="font-weight:400;color:var(--muted)">(click to view your gold cards)</span></label>
+          <div class="card-type-grid" id="gold-card-type-grid"></div>
         </div>
 
         <input type="hidden" id="give-type"> <!-- Stores cardTypeId for general or core value for gold -->
@@ -574,6 +574,20 @@
       <div class="cards-display-grid" id="card-display-grid"></div>
     </div>
 
+    <!-- ── GOLD CARD DISPLAY (sub-view of Give Card) ── -->
+    <div class="view" id="view-gold-card-display">
+      <div class="card-display-header">
+        <button class="back-btn" onclick="showView('give')">← Back to Give Card</button>
+        <div class="page-header" style="margin-bottom:0">
+          <h2 id="gold-card-display-title">Gold Cards</h2>
+          <p id="gold-card-display-subtitle">Click any card to flip it and see the back</p>
+        </div>
+        <button class="btn btn-primary" id="gold-card-display-give-btn" style="margin-left:auto;width:auto;padding:10px 20px" onclick="giveFromGoldDisplay()">Give this Card →</button>
+      </div>
+      <div class="card-display-summary" id="gold-card-display-summary"></div>
+      <div class="cards-display-grid" id="gold-card-display-grid"></div>
+    </div>
+
     <!-- ── ADMIN ── -->
     <div class="view" id="view-admin">
       <div class="page-header">
@@ -605,7 +619,7 @@
             </select>
           </div>
           <div class="form-group">
-            <label>Team</label>
+            <label>Capability Team</label>
             <select id="new-user-team">
               <option value="business-growth">Business Growth</option>
               <option value="core-enablers">Core Enablers</option>
@@ -689,36 +703,50 @@
           <div class="empty" id="admin-card-categories-empty" style="display:none"><div class="empty-icon">🎴</div><p>No card categories defined yet.</p></div>
         </div>
 
-        <!-- NEW: Manage Gold Card Behaviors -->
-        <div class="admin-panel">
-          <h3>🏆 Manage Gold Card Behaviors</h3>
-          <p style="font-size:12px;color:var(--muted);margin-bottom:15px;">Define specific non-negotiable behaviors for each team and core value.</p>
-          <div class="form-group">
-            <label>Select Team</label>
-            <select id="new-gold-card-team"></select>
+        <!-- Add Gold Card Category -->
+        <div class="admin-panel" style="grid-column: 1 / -1;">
+          <h3>🏆 Add Gold Card Category</h3>
+          <p style="font-size:12px;color:var(--muted);margin-bottom:15px;">Add gold card categories for each capability team and value (4-5 per value). Each category gives users 3 gold cards. Upload PNG recto/verso.</p>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px">
+            <div>
+              <div class="form-group">
+                <label>Select Capability Team</label>
+                <select id="new-gold-cat-team"></select>
+              </div>
+              <div class="form-group">
+                <label>Select Core Value</label>
+                <select id="new-gold-cat-value"></select>
+              </div>
+              <div class="form-group">
+                <label>Category Name</label>
+                <input type="text" id="new-gold-cat-name" placeholder="e.g. Always takes initiative">
+              </div>
+            </div>
+            <div>
+              <div class="img-upload-group">
+                <div class="img-upload-box">
+                  <label>Card Front (Recto) PNG</label>
+                  <input type="file" id="new-gold-cat-front" accept="image/png,image/jpeg,image/webp" onchange="previewCardImage(this, 'preview-gold-cat-front')">
+                  <div class="img-preview" id="preview-gold-cat-front"><span class="placeholder-text">Front</span></div>
+                </div>
+                <div class="img-upload-box">
+                  <label>Card Back (Verso) PNG</label>
+                  <input type="file" id="new-gold-cat-back" accept="image/png,image/jpeg,image/webp" onchange="previewCardImage(this, 'preview-gold-cat-back')">
+                  <div class="img-preview" id="preview-gold-cat-back"><span class="placeholder-text">Back</span></div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div class="form-group">
-            <label>Select Core Value</label>
-            <select id="new-gold-card-value"></select>
-          </div>
-          <div class="form-group">
-            <label>Behavior Name</label>
-            <input type="text" id="new-gold-card-name" placeholder="e.g. Always takes initiative">
-          </div>
-          <div class="form-group">
-            <label>Emoji Icon (optional)</label>
-            <input type="text" id="new-gold-card-icon" placeholder="e.g. ✨">
-          </div>
-          <div class="alert error" id="add-gold-ct-error"></div>
-          <div class="alert success" id="add-gold-ct-success"></div>
-          <button class="btn btn-primary" onclick="addGoldCardBehavior()">Add Gold Behavior</button>
+          <div class="alert error" id="add-gold-cat-error"></div>
+          <div class="alert success" id="add-gold-cat-success"></div>
+          <button class="btn btn-primary" onclick="addGoldCardCategory()" style="width:auto">Add Gold Category</button>
         </div>
 
-        <!-- NEW: Gold Card Behaviors List -->
-        <div class="admin-panel">
-          <h3>📋 Gold Card Behaviors List</h3>
-          <div id="admin-gold-card-list"></div>
-          <div class="empty" id="admin-gold-card-list-empty" style="display:none"><div class="empty-icon">🏆</div><p>No gold behaviors defined yet.</p></div>
+        <!-- Gold Card Categories List -->
+        <div class="admin-panel" style="grid-column: 1 / -1;">
+          <h3>📋 Gold Card Categories by Capability Team & Value</h3>
+          <div id="admin-gold-card-categories-list"></div>
+          <div class="empty" id="admin-gold-card-categories-empty" style="display:none"><div class="empty-icon">🏆</div><p>No gold card categories defined yet.</p></div>
         </div>
 
         <!-- All Activity -->
@@ -791,6 +819,7 @@ function initData() {
   if (!STORE.get('goldCardBehaviors')) { STORE.set('goldCardBehaviors', []); }
   if (!STORE.get('cardImages')) { STORE.set('cardImages', {}); }
   if (!STORE.get('cardCategories')) { STORE.set('cardCategories', []); }
+  if (!STORE.get('goldCardCategories')) { STORE.set('goldCardCategories', []); }
 }
 
 // ══════════════════════════════════════
@@ -845,8 +874,8 @@ function showView(name) {
   const allTabs = document.querySelectorAll('.nav-tab');
   const idx = ['dashboard','give','mycards','admin'].indexOf(name);
   if (idx !== -1 && allTabs[idx]) allTabs[idx].classList.add('active');
-  // For card-display, highlight the Give Card tab
-  if (name === 'card-display' && allTabs[1]) allTabs[1].classList.add('active');
+  // For card-display and gold-card-display, highlight the Give Card tab
+  if ((name === 'card-display' || name === 'gold-card-display') && allTabs[1]) allTabs[1].classList.add('active');
   if (name === 'dashboard') renderDashboard();
   if (name === 'give') renderGiveForm();
   if (name === 'mycards') renderMyCards();
@@ -909,10 +938,10 @@ function renderTeamDashboard(teamId) {
   const users = (STORE.get('users') || []).filter(u => u.team === teamId);
   const allCards = STORE.get('cards') || [];
   const cardTypes = STORE.get('cardTypes') || [];
-  const goldCardBehaviors = STORE.get('goldCardBehaviors') || [];
+  const goldCardCategories = STORE.get('goldCardCategories') || [];
 
   const cardsInTeam = allCards.filter(c => users.some(u => u.id === c.toId));
-  
+
   const totalCards = cardsInTeam.length;
   const activeGivers = [...new Set(cardsInTeam.map(c => c.fromId))].length;
 
@@ -921,7 +950,7 @@ function renderTeamDashboard(teamId) {
       <div class="stat-card c1"><div class="stat-label">Total Cards Received</div><div class="stat-value">${totalCards}</div></div>
       <div class="stat-card c3"><div class="stat-label">Team Members</div><div class="stat-value">${users.length}</div></div>
       <div class="stat-card c4"><div class="stat-label">Active Givers</div><div class="stat-value">${activeGivers}</div></div>
-      <div class="stat-card c2"><div class="stat-label">Card Types</div><div class="stat-value">${cardTypes.length + goldCardBehaviors.length}</div></div>
+      <div class="stat-card c2"><div class="stat-label">Card Types</div><div class="stat-value">${cardTypes.length + goldCardCategories.filter(gc => gc.teamId === teamId).length}</div></div>
     </div>`;
 
   // Tally
@@ -955,12 +984,8 @@ function renderTeamDashboard(teamId) {
         return `<span class="pill ${pillCls(ct)}">${ct.icon} ${ct.name} ×${n}</span>`;
       }).join('');
 
-      let goldPills = goldCardBehaviors.map(gb => {
-        const n = entry.goldTypes[gb.id] || 0;
-        if (!n) return '';
-        const coreValue = getCardTypeInfo(gb.cardTypeId);
-        return `<span class="pill gold-behavior" title="Gold: ${coreValue.name}">${gb.icon} ${gb.name} ×${n}</span>`;
-      }).join('');
+      let goldCount = Object.values(entry.goldTypes).reduce((a, b) => a + b, 0);
+      let goldPills = goldCount > 0 ? `<span class="pill gold-behavior">🏆 Gold ×${goldCount}</span>` : '';
 
       return `
         <div class="lb-row ${isMe ? 'me' : ''}">
@@ -1008,13 +1033,20 @@ function renderGiveForm() {
       <span class="ct-label">${ct.name}</span>
     </button>`).join('');
 
-  const goldBehaviors = STORE.get('goldCardBehaviors') || [];
-  const goldSelect = document.getElementById('give-gold-behavior');
-  goldSelect.innerHTML = '<option value="">Select a Gold Behavior</option>' + goldBehaviors.map(gb => {
-    const team = getTeamById(gb.teamId);
-    const coreValue = getCardTypeInfo(gb.cardTypeId);
-    return `<option value="${gb.id}">${gb.icon} ${gb.name} (${team.name} - ${coreValue.name})</option>`;
-  }).join('');
+  // Gold card value buttons - only show values that have gold categories for user's team
+  const goldCategories = STORE.get('goldCardCategories') || [];
+  const myTeamGoldCats = goldCategories.filter(gc => gc.teamId === currentUser.team);
+  const goldValuesWithCats = [...new Set(myTeamGoldCats.map(gc => gc.cardTypeId))];
+  const goldGrid = document.getElementById('gold-card-type-grid');
+  if (goldValuesWithCats.length === 0) {
+    goldGrid.innerHTML = '<p style="font-size:13px;color:var(--muted)">No gold cards available for your capability team yet.</p>';
+  } else {
+    goldGrid.innerHTML = generalCardTypes.filter(ct => goldValuesWithCats.includes(ct.id)).map((ct, i) => `
+      <button class="card-type-btn ${clsList[generalCardTypes.indexOf(ct) % clsList.length]}" onclick="openGoldCardDisplay('${ct.id}')" data-id="${ct.id}">
+        <span class="ct-icon">${ct.icon}</span>
+        <span class="ct-label">${ct.name}</span>
+      </button>`).join('');
+  }
 
   selectedCardIdentifier = { id: null, isGold: false };
   document.getElementById('give-type').value = '';
@@ -1040,7 +1072,7 @@ function toggleCardSelection() {
     document.getElementById('is-gold-card').value = 'false';
     document.getElementById('give-gold-behavior-id').value = '';
     document.querySelectorAll('#general-card-type-grid .card-type-btn').forEach(b => b.classList.remove('selected', 'pioneer', 'purposeful', 'excellence', 'reliable', 'sustainable'));
-    document.getElementById('give-gold-behavior').value = '';
+    document.querySelectorAll('#gold-card-type-grid .card-type-btn').forEach(b => b.classList.remove('selected', 'pioneer', 'purposeful', 'excellence', 'reliable', 'sustainable'));
 }
 
 function selectGeneralCardType(id, el, cls) {
@@ -1053,22 +1085,84 @@ function selectGeneralCardType(id, el, cls) {
   el.classList.add('selected', cls);
 }
 
-function selectGoldCardType(goldBehaviorId) {
-    if (!goldBehaviorId) {
-        selectedCardIdentifier = { id: null, isGold: false };
-        document.getElementById('give-type').value = '';
-        document.getElementById('is-gold-card').value = 'false';
-        document.getElementById('give-gold-behavior-id').value = '';
-        return;
-    }
-    const goldBehavior = getGoldBehaviorInfo(goldBehaviorId);
-    selectedCardIdentifier = { id: goldBehavior.cardTypeId, isGold: true, goldBehaviorId: goldBehaviorId }; // typeId becomes the core value
-    document.getElementById('give-type').value = goldBehavior.cardTypeId;
-    document.getElementById('is-gold-card').value = 'true';
-    document.getElementById('give-gold-behavior-id').value = goldBehaviorId;
+// Gold card display
+let currentGoldDisplayCardTypeId = null;
 
-    // Clear general card selection visual state
-    document.querySelectorAll('#general-card-type-grid .card-type-btn').forEach(b => b.classList.remove('selected', 'pioneer', 'purposeful', 'excellence', 'reliable', 'sustainable'));
+function openGoldCardDisplay(cardTypeId) {
+  currentGoldDisplayCardTypeId = cardTypeId;
+  renderGoldCardDisplay(cardTypeId);
+  showView('gold-card-display');
+}
+
+function giveFromGoldDisplay() {
+  if (!currentGoldDisplayCardTypeId) return;
+  showView('give');
+  setTimeout(() => {
+    // Pre-select gold mode and the value
+    document.getElementById('card-category-gold').checked = true;
+    toggleCardSelection();
+    selectedCardIdentifier = { id: currentGoldDisplayCardTypeId, isGold: true };
+    document.getElementById('give-type').value = currentGoldDisplayCardTypeId;
+    document.getElementById('is-gold-card').value = 'true';
+  }, 50);
+}
+
+function renderGoldCardDisplay(cardTypeId) {
+  const ct = getCardTypeInfo(cardTypeId);
+  const goldCategories = (STORE.get('goldCardCategories') || []).filter(c => c.cardTypeId === cardTypeId && c.teamId === currentUser.team);
+  const cardImages = STORE.get('cardImages') || {};
+  const allCards = STORE.get('cards') || [];
+  const CARDS_PER_CATEGORY = 3;
+
+  const team = getTeamById(currentUser.team);
+  document.getElementById('gold-card-display-title').textContent = ct.icon + ' ' + ct.name + ' Gold Cards';
+  document.getElementById('gold-card-display-subtitle').textContent = team.name + ' — Click any card to flip';
+
+  const givenForType = allCards.filter(c => c.fromId === currentUser.id && c.typeId === cardTypeId && c.isGoldCard);
+  const totalCards = goldCategories.length * CARDS_PER_CATEGORY;
+  const totalGiven = givenForType.length;
+
+  document.getElementById('gold-card-display-summary').innerHTML = `
+    <div class="summary-card">
+      <div class="summary-label">Categories</div>
+      <div class="summary-value" style="color:var(--accent)">${goldCategories.length}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Total Cards</div>
+      <div class="summary-value" style="color:var(--accent)">${totalCards}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Given Away</div>
+      <div class="summary-value" style="color:var(--accent2)">${totalGiven}</div>
+    </div>
+    <div class="summary-card">
+      <div class="summary-label">Remaining</div>
+      <div class="summary-value" style="color:var(--accent3)">${Math.max(0, totalCards - totalGiven)}</div>
+    </div>`;
+
+  let gridHtml = '';
+  if (goldCategories.length === 0) {
+    gridHtml = '<div class="empty"><div class="empty-icon">🏆</div><p>No gold card categories for ' + ct.name + ' in your capability team yet.</p></div>';
+  }
+
+  let givenIndex = 0;
+  goldCategories.forEach(cat => {
+    const images = cardImages[cat.id] || {};
+    gridHtml += `<div class="category-section"><h3>${cat.name}</h3><div class="category-cards-row">`;
+    for (let i = 0; i < CARDS_PER_CATEGORY; i++) {
+      if (givenIndex < givenForType.length) {
+        const c = givenForType[givenIndex];
+        const recipient = getUserById(c.toId);
+        gridHtml += buildFlipCardHtml(images, cat.name, true, recipient, c.ts);
+        givenIndex++;
+      } else {
+        gridHtml += buildFlipCardHtml(images, cat.name, false, null, null);
+      }
+    }
+    gridHtml += `</div></div>`;
+  });
+
+  document.getElementById('gold-card-display-grid').innerHTML = gridHtml;
 }
 
 
@@ -1136,17 +1230,15 @@ function renderCardList(elId, cards, direction) {
     let cardPillHtml;
 
     if (c.isGoldCard) {
-        const goldBehavior = getGoldBehaviorInfo(c.goldBehaviorId);
-        const coreValue = getCardTypeInfo(goldBehavior.cardTypeId);
-        const team = getTeamById(goldBehavior.teamId);
-        cardPillHtml = `<span class="pill gold-behavior" title="Gold: ${coreValue.name} (${team.name})">${goldBehavior.icon} ${goldBehavior.name}</span>`;
+        const ct = getCardTypeInfo(c.typeId);
+        cardPillHtml = `<span class="pill gold-behavior">🏆 ${ct.name} Gold</span>`;
     } else {
         const ct = getCardTypeInfo(c.typeId);
         cardPillHtml = `<span class="pill ${pillCls(ct)}">${ct.icon} ${ct.name}</span>`;
     }
 
     const other = getUserById(direction === 'from' ? c.fromId : c.toId);
-    cardMetaLabel = direction === 'from' ? `From ${other.name}` : `To ${other.name}`;
+    const cardMetaLabel = direction === 'from' ? `From ${other.name}` : `To ${other.name}`;
     
     return `
       <div class="card-item">
@@ -1173,8 +1265,8 @@ function renderAdmin() {
   renderAdminCardTypes();
   renderCategoryFormDropdown();
   renderAdminCardCategories();
-  renderGoldCardManagementForm();
-  renderAdminGoldCardBehaviors();
+  renderGoldCategoryFormDropdowns();
+  renderAdminGoldCardCategories();
   renderAdminAllCards();
 }
 
@@ -1210,92 +1302,119 @@ function renderAdminCardTypes() {
   }).join('');
 }
 
-// Render Gold Card Management Form
-function renderGoldCardManagementForm() {
-    const teamSelect = document.getElementById('new-gold-card-team');
-    teamSelect.innerHTML = TEAMS.map(team => `<option value="${team.id}">${team.icon} ${team.name}</option>`).join('');
-
-    const coreValueSelect = document.getElementById('new-gold-card-value');
+// ══════════════════════════════════════
+// GOLD CARD CATEGORIES
+// ══════════════════════════════════════
+function renderGoldCategoryFormDropdowns() {
+    const teamSelect = document.getElementById('new-gold-cat-team');
+    if (teamSelect) teamSelect.innerHTML = TEAMS.map(team => `<option value="${team.id}">${team.icon} ${team.name}</option>`).join('');
+    const coreValueSelect = document.getElementById('new-gold-cat-value');
     const cardTypes = STORE.get('cardTypes') || [];
-    coreValueSelect.innerHTML = cardTypes.map(ct => `<option value="${ct.id}">${ct.icon} ${ct.name}</option>`).join('');
+    if (coreValueSelect) coreValueSelect.innerHTML = cardTypes.map(ct => `<option value="${ct.id}">${ct.icon} ${ct.name}</option>`).join('');
 }
 
-// Add Gold Card Behavior
-function addGoldCardBehavior() {
-    const teamId = document.getElementById('new-gold-card-team').value;
-    const cardTypeId = document.getElementById('new-gold-card-value').value;
-    const name = document.getElementById('new-gold-card-name').value.trim();
-    const icon = document.getElementById('new-gold-card-icon').value.trim() || '🏆';
-    const errEl = document.getElementById('add-gold-ct-error');
-    const sucEl = document.getElementById('add-gold-ct-success');
+async function addGoldCardCategory() {
+    const teamId = document.getElementById('new-gold-cat-team').value;
+    const cardTypeId = document.getElementById('new-gold-cat-value').value;
+    const name = document.getElementById('new-gold-cat-name').value.trim();
+    const frontInput = document.getElementById('new-gold-cat-front');
+    const backInput = document.getElementById('new-gold-cat-back');
+    const errEl = document.getElementById('add-gold-cat-error');
+    const sucEl = document.getElementById('add-gold-cat-success');
     errEl.style.display = 'none'; sucEl.style.display = 'none';
 
-    if (!teamId || !cardTypeId || !name) { errEl.textContent = 'Team, Core Value, and Behavior Name are required.'; errEl.style.display = 'block'; return; }
+    if (!teamId || !cardTypeId || !name) { errEl.textContent = 'Capability Team, Core Value, and Category Name are required.'; errEl.style.display = 'block'; return; }
 
-    const goldCardBehaviors = STORE.get('goldCardBehaviors') || [];
-    const newBehavior = { id: makeId(), teamId, cardTypeId, name, icon };
-    goldCardBehaviors.push(newBehavior);
-    STORE.set('goldCardBehaviors', goldCardBehaviors);
+    const newId = makeId();
+    const goldCategories = STORE.get('goldCardCategories') || [];
+    goldCategories.push({ id: newId, teamId, cardTypeId, name });
+    STORE.set('goldCardCategories', goldCategories);
 
-    document.getElementById('new-gold-card-name').value = '';
-    document.getElementById('new-gold-card-icon').value = '';
-    sucEl.textContent = `✓ "${name}" gold behavior added successfully.`; sucEl.style.display = 'block';
+    // Save images
+    const cardImages = STORE.get('cardImages') || {};
+    cardImages[newId] = {};
+    if (frontInput.files && frontInput.files[0]) cardImages[newId].front = await readFileAsDataURL(frontInput.files[0]);
+    if (backInput.files && backInput.files[0]) cardImages[newId].back = await readFileAsDataURL(backInput.files[0]);
+    STORE.set('cardImages', cardImages);
+
+    document.getElementById('new-gold-cat-name').value = '';
+    frontInput.value = ''; backInput.value = '';
+    document.getElementById('preview-gold-cat-front').innerHTML = '<span class="placeholder-text">Front</span>';
+    document.getElementById('preview-gold-cat-back').innerHTML = '<span class="placeholder-text">Back</span>';
+    const ct = getCardTypeInfo(cardTypeId);
+    const team = getTeamById(teamId);
+    sucEl.textContent = `"${name}" added under ${ct.name} for ${team.name}.`; sucEl.style.display = 'block';
     setTimeout(() => sucEl.style.display = 'none', 3000);
-    renderAdminGoldCardBehaviors();
+    renderAdminGoldCardCategories();
 }
 
-// Render Admin Gold Card Behaviors List
-function renderAdminGoldCardBehaviors() {
-    const goldCardBehaviors = STORE.get('goldCardBehaviors') || [];
-    const el = document.getElementById('admin-gold-card-list');
-    const emptyEl = document.getElementById('admin-gold-card-list-empty');
+function deleteGoldCardCategory(id) {
+    if (!confirm('Remove this gold card category?')) return;
+    const cats = (STORE.get('goldCardCategories') || []).filter(c => c.id !== id);
+    STORE.set('goldCardCategories', cats);
+    const cardImages = STORE.get('cardImages') || {};
+    delete cardImages[id];
+    STORE.set('cardImages', cardImages);
+    renderAdminGoldCardCategories();
+}
 
-    if (goldCardBehaviors.length === 0) {
-        el.innerHTML = '';
-        emptyEl.style.display = 'block';
-        return;
-    } else {
-        emptyEl.style.display = 'none';
-    }
+async function updateGoldCategoryImages(catId) {
+    const frontInput = document.getElementById('gcat-front-' + catId);
+    const backInput = document.getElementById('gcat-back-' + catId);
+    const cardImages = STORE.get('cardImages') || {};
+    if (!cardImages[catId]) cardImages[catId] = {};
+    if (frontInput && frontInput.files && frontInput.files[0]) cardImages[catId].front = await readFileAsDataURL(frontInput.files[0]);
+    if (backInput && backInput.files && backInput.files[0]) cardImages[catId].back = await readFileAsDataURL(backInput.files[0]);
+    STORE.set('cardImages', cardImages);
+    renderAdminGoldCardCategories();
+    alert('Gold card images updated!');
+}
 
-    // Group by team, then by cardType (core value)
-    const grouped = goldCardBehaviors.reduce((acc, behavior) => {
-        if (!acc[behavior.teamId]) acc[behavior.teamId] = {};
-        if (!acc[behavior.teamId][behavior.cardTypeId]) acc[behavior.teamId][behavior.cardTypeId] = [];
-        acc[behavior.teamId][behavior.cardTypeId].push(behavior);
-        return acc;
-    }, {});
+function renderAdminGoldCardCategories() {
+    const goldCategories = STORE.get('goldCardCategories') || [];
+    const cardImages = STORE.get('cardImages') || {};
+    const el = document.getElementById('admin-gold-card-categories-list');
+    const emptyEl = document.getElementById('admin-gold-card-categories-empty');
+
+    if (goldCategories.length === 0) { el.innerHTML = ''; emptyEl.style.display = 'block'; return; }
+    emptyEl.style.display = 'none';
+
+    // Group by team, then by cardType
+    const grouped = {};
+    goldCategories.forEach(cat => {
+        if (!grouped[cat.teamId]) grouped[cat.teamId] = {};
+        if (!grouped[cat.teamId][cat.cardTypeId]) grouped[cat.teamId][cat.cardTypeId] = [];
+        grouped[cat.teamId][cat.cardTypeId].push(cat);
+    });
 
     let html = '';
     for (const teamId in grouped) {
         const team = getTeamById(teamId);
-        html += `<div class="gold-card-team-group">`;
-        html += `<h4>${team.icon} ${team.name}</h4>`;
+        html += `<div class="gold-card-team-group"><h4>${team.icon} ${team.name}</h4>`;
         for (const cardTypeId in grouped[teamId]) {
-            const cardType = getCardTypeInfo(cardTypeId);
-            html += `<div class="gold-card-value-group">`;
-            html += `<h5>${cardType.icon} ${cardType.name}</h5>`;
-            html += `<ul>`;
-            grouped[teamId][cardTypeId].forEach(behavior => {
+            const ct = getCardTypeInfo(cardTypeId);
+            html += `<div class="gold-card-value-group"><h5>${ct.icon} ${ct.name}</h5>`;
+            grouped[teamId][cardTypeId].forEach(cat => {
+                const imgs = cardImages[cat.id] || {};
+                const frontThumb = imgs.front ? `<img src="${imgs.front}" style="width:36px;height:50px;object-fit:cover;border-radius:4px">` : '<span style="font-size:10px;color:var(--muted)">No img</span>';
+                const backThumb = imgs.back ? `<img src="${imgs.back}" style="width:36px;height:50px;object-fit:cover;border-radius:4px">` : '<span style="font-size:10px;color:var(--muted)">No img</span>';
                 html += `
-                    <li>
-                        <span><span class="gold-icon">${behavior.icon}</span> ${behavior.name}</span>
-                        <button class="btn btn-danger btn-sm" onclick="deleteGoldCardBehavior('${behavior.id}')">Remove</button>
-                    </li>`;
+                <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px dotted var(--border);flex-wrap:wrap">
+                  <span style="font-weight:700;flex:1;min-width:120px">${cat.name}</span>
+                  <div style="display:flex;gap:6px;align-items:center">${frontThumb} ${backThumb}</div>
+                  <div style="display:flex;gap:6px;align-items:flex-end">
+                    <div style="font-size:11px"><div style="color:var(--muted)">Front:</div><input type="file" id="gcat-front-${cat.id}" accept="image/png,image/jpeg,image/webp" style="font-size:10px;width:110px"></div>
+                    <div style="font-size:11px"><div style="color:var(--muted)">Back:</div><input type="file" id="gcat-back-${cat.id}" accept="image/png,image/jpeg,image/webp" style="font-size:10px;width:110px"></div>
+                    <button class="btn btn-secondary btn-sm" onclick="updateGoldCategoryImages('${cat.id}')">Save</button>
+                  </div>
+                  <button class="btn btn-danger btn-sm" onclick="deleteGoldCardCategory('${cat.id}')">Remove</button>
+                </div>`;
             });
-            html += `</ul></div>`;
+            html += `</div>`;
         }
         html += `</div>`;
     }
     el.innerHTML = html;
-}
-
-// Delete Gold Card Behavior
-function deleteGoldCardBehavior(id) {
-    if (!confirm('Remove this gold card behavior?')) return;
-    const goldCardBehaviors = (STORE.get('goldCardBehaviors') || []).filter(gb => gb.id !== id);
-    STORE.set('goldCardBehaviors', goldCardBehaviors);
-    renderAdminGoldCardBehaviors();
 }
 
 function addUser() {
@@ -1375,10 +1494,8 @@ function renderAdminAllCards() {
     let cardPillHtml;
 
     if (c.isGoldCard) {
-        const goldBehavior = getGoldBehaviorInfo(c.goldBehaviorId);
-        const coreValue = getCardTypeInfo(goldBehavior.cardTypeId);
-        const team = getTeamById(goldBehavior.teamId);
-        cardPillHtml = `<span class="pill gold-behavior" title="Gold: ${coreValue.name} (${team.name})">${goldBehavior.icon} ${goldBehavior.name}</span>`;
+        const ct = getCardTypeInfo(c.typeId);
+        cardPillHtml = `<span class="pill gold-behavior">🏆 ${ct.name} Gold</span>`;
     } else {
         const ct = getCardTypeInfo(c.typeId);
         cardPillHtml = `<span class="pill ${pillCls(ct)}">${ct.icon} ${ct.name}</span>`;
