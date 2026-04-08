@@ -524,6 +524,9 @@
 
         <!-- General Value Card Selection Grid -->
         <div class="form-group" id="general-card-selection">
+          <div style="text-align:center;margin-bottom:12px">
+            <span style="font-family:'Permanent Marker',cursive;font-size:36px;letter-spacing:2px;color:var(--accent)">r</span><span style="font-family:'Permanent Marker',cursive;font-size:36px;letter-spacing:2px;color:var(--accent3)">e</span><span style="font-family:'Permanent Marker',cursive;font-size:36px;letter-spacing:2px;color:var(--accent)">s</span><span style="font-family:'Permanent Marker',cursive;font-size:48px;letter-spacing:2px;color:var(--accent2)">P</span>
+          </div>
           <label>Select Core Value <span style="font-weight:400;color:var(--muted)">(click to view your cards)</span></label>
           <div class="card-type-grid" id="general-card-type-grid"></div>
         </div>
@@ -857,12 +860,11 @@ function initData() {
   }
   if (!STORE.get('cardTypes')) {
     STORE.set('cardTypes', [
-      { id: 'ct1', name: 'Pioneer', icon: '🚀', cls: 'pioneer' },
-      { id: 'ct2', name: 'Purposeful', icon: '🎯', cls: 'purposeful' },
-      { id: 'ct3', name: 'Excellence', icon: '⭐', cls: 'excellence' },
       { id: 'ct4', name: 'Reliable', icon: '✅', cls: 'reliable' },
-      { id: 'ct5', name: 'Sustainable', icon: '🌍', cls: 'sustainable' }
-      /* Removed ct6 'Gold Card' to align with "5 values" for gold behaviors */
+      { id: 'ct3', name: 'Excellence', icon: '⭐', cls: 'excellence' },
+      { id: 'ct5', name: 'Sustainable', icon: '🌍', cls: 'sustainable' },
+      { id: 'ct1', name: 'Pioneer', icon: '🚀', cls: 'pioneer' },
+      { id: 'ct2', name: 'Purposeful', icon: '🎯', cls: 'purposeful' }
     ]);
   }
   if (!STORE.get('cards')) { STORE.set('cards', []); }
@@ -1075,10 +1077,9 @@ function renderGiveForm() {
   sel.innerHTML = others.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
 
   const generalCardTypes = STORE.get('cardTypes') || [];
-  const clsList = ['pioneer','purposeful','excellence','reliable','sustainable'];
   const generalGrid = document.getElementById('general-card-type-grid');
-  generalGrid.innerHTML = generalCardTypes.map((ct, i) => `
-    <button class="card-type-btn ${clsList[i % clsList.length]}" onclick="openCardDisplay('${ct.id}')" data-id="${ct.id}">
+  generalGrid.innerHTML = generalCardTypes.map(ct => `
+    <button class="card-type-btn ${ct.cls}" onclick="openCardDisplay('${ct.id}')" data-id="${ct.id}">
       <span class="ct-icon">${ct.icon}</span>
       <span class="ct-label">${ct.name}</span>
     </button>`).join('');
@@ -1091,8 +1092,8 @@ function renderGiveForm() {
   if (goldValuesWithCats.length === 0) {
     goldGrid.innerHTML = '<p style="font-size:13px;color:var(--muted)">No gold cards available for your capability team yet.</p>';
   } else {
-    goldGrid.innerHTML = generalCardTypes.filter(ct => goldValuesWithCats.includes(ct.id)).map((ct, i) => `
-      <button class="card-type-btn ${clsList[generalCardTypes.indexOf(ct) % clsList.length]}" onclick="openGoldCardDisplay('${ct.id}')" data-id="${ct.id}">
+    goldGrid.innerHTML = generalCardTypes.filter(ct => goldValuesWithCats.includes(ct.id)).map(ct => `
+      <button class="card-type-btn ${ct.cls}" onclick="openGoldCardDisplay('${ct.id}')" data-id="${ct.id}">
         <span class="ct-icon">${ct.icon}</span>
         <span class="ct-label">${ct.name}</span>
       </button>`).join('');
@@ -1735,10 +1736,9 @@ function giveFromDisplay() {
   if (!currentDisplayCardTypeId) return;
   showView('give');
   setTimeout(() => {
-    const clsList = ['pioneer','purposeful','excellence','reliable','sustainable'];
     const cardTypes = STORE.get('cardTypes') || [];
-    const idx = cardTypes.findIndex(c => c.id === currentDisplayCardTypeId);
-    const cls = clsList[idx % clsList.length] || 'pioneer';
+    const ct = cardTypes.find(c => c.id === currentDisplayCardTypeId);
+    const cls = ct ? ct.cls : 'pioneer';
     const btn = document.querySelector(`#general-card-type-grid .card-type-btn[data-id="${currentDisplayCardTypeId}"]`);
     if (btn) selectGeneralCardType(currentDisplayCardTypeId, btn, cls);
   }, 50);
