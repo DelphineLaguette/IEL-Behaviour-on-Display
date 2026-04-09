@@ -1093,7 +1093,7 @@ function renderTeamDashboard(teamId) {
         <div class="lb-row ${isMe ? 'me' : ''}">
           <div class="rank ${rc}">${i + 1}</div>
           <div class="avatar" style="background:${entry.user.color||'#0F2C61'};color:#ffffff">${entry.user.name.charAt(0).toUpperCase()}</div>
-          <div class="lb-name">${entry.user.name} ${isMe ? '<small>— You</small>' : ''}${entry.user.commitment ? `<div style="font-size:12px;font-style:italic;color:var(--muted);margin-top:2px;font-weight:400">${entry.user.name.split(' ')[0]}'s commitment to the team - ${entry.user.commitment}</div>` : ''}</div>
+          <div class="lb-name">${entry.user.name} ${isMe ? '<small>— You</small>' : ''}${(entry.user.commitment && currentUser.team === teamId) ? `<div style="font-size:12px;font-style:italic;color:var(--muted);margin-top:2px;font-weight:400">${entry.user.name.split(' ')[0]}'s commitment to the team - ${entry.user.commitment}</div>` : ''}</div>
           <div class="lb-cards">
             ${typePills || goldPills || '<span style="font-size:12px;color:var(--muted)">No cards yet</span>'}
             ${(typePills && goldPills) ? '<br>' : ''}
