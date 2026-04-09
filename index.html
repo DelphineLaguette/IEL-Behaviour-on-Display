@@ -525,7 +525,7 @@
         <!-- General Value Card Selection Grid -->
         <div class="form-group" id="general-card-selection">
           <div style="text-align:center;margin-bottom:12px">
-            <span style="font-family:'Permanent Marker',cursive;font-size:36px;letter-spacing:2px;color:var(--accent)">r</span><span style="font-family:'Permanent Marker',cursive;font-size:36px;letter-spacing:2px;color:var(--accent3)">e</span><span style="font-family:'Permanent Marker',cursive;font-size:36px;letter-spacing:2px;color:var(--accent)">s</span><span style="font-family:'Permanent Marker',cursive;font-size:48px;letter-spacing:2px;color:var(--accent2)">P</span>
+            <span style="font-family:'Permanent Marker',cursive;font-size:52px;letter-spacing:3px;color:var(--accent)">r</span><span style="font-family:'Permanent Marker',cursive;font-size:52px;letter-spacing:3px;color:var(--accent3)">e</span><span style="font-family:'Permanent Marker',cursive;font-size:52px;letter-spacing:3px;color:var(--accent)">s</span><span style="font-family:'Permanent Marker',cursive;font-size:68px;letter-spacing:3px;color:var(--accent2)">P</span>
           </div>
           <label>Select Core Value <span style="font-weight:400;color:var(--muted)">(click to view your cards)</span></label>
           <div class="card-type-grid" id="general-card-type-grid"></div>
@@ -792,29 +792,61 @@ const STORE = {
     try { return JSON.parse(localStorage.getItem(STORE_PREFIX + key)); } catch { return null; }
   },
   set(key, val) {
-    localStorage.setItem(STORE_PREFIX + key, JSON.stringify(val));
+    try {
+      localStorage.setItem(STORE_PREFIX + key, JSON.stringify(val));
+    } catch (e) {
+      console.warn('localStorage write error (possibly too large):', key, e);
+    }
     // Sync to Firebase (fire-and-forget)
     db.ref('appData/' + key).set(val).catch(err => console.warn('Firebase write error:', err));
+  }
+};
+
+// Separate image storage — stores each image individually to avoid size limits
+const IMG_STORE = {
+  get(catId) {
+    try { return JSON.parse(localStorage.getItem('ibl_img_' + catId)); } catch { return null; }
+  },
+  set(catId, imgObj) {
+    try {
+      localStorage.setItem('ibl_img_' + catId, JSON.stringify(imgObj));
+    } catch (e) {
+      console.warn('localStorage img write error:', catId, e);
+    }
+    db.ref('cardImages/' + catId).set(imgObj).catch(err => console.warn('Firebase img write error:', err));
+  },
+  remove(catId) {
+    localStorage.removeItem('ibl_img_' + catId);
+    db.ref('cardImages/' + catId).remove().catch(() => {});
   }
 };
 
 // Load all data from Firebase into localStorage
 async function loadFromFirebase() {
   try {
+    // Load app data
     const snapshot = await db.ref('appData').once('value');
     const data = snapshot.val();
     if (data) {
       for (const key in data) {
         localStorage.setItem(STORE_PREFIX + key, JSON.stringify(data[key]));
       }
-      console.log('Firebase: data loaded successfully', Object.keys(data));
-      return true;
+      console.log('Firebase: app data loaded', Object.keys(data));
     }
-    console.log('Firebase: no data found, will push defaults');
-    return false;
+
+    // Load card images individually
+    const imgSnapshot = await db.ref('cardImages').once('value');
+    const imgData = imgSnapshot.val();
+    if (imgData) {
+      for (const catId in imgData) {
+        localStorage.setItem('ibl_img_' + catId, JSON.stringify(imgData[catId]));
+      }
+      console.log('Firebase: card images loaded', Object.keys(imgData).length, 'categories');
+    }
+
+    return !!(data);
   } catch (err) {
     console.error('Firebase read error:', err);
-    // Show error to user
     const errDiv = document.createElement('div');
     errDiv.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;font-family:sans-serif';
     errDiv.textContent = 'Firebase connection error: ' + err.message;
@@ -869,9 +901,18 @@ function initData() {
   }
   if (!STORE.get('cards')) { STORE.set('cards', []); }
   if (!STORE.get('goldCardBehaviors')) { STORE.set('goldCardBehaviors', []); }
-  if (!STORE.get('cardImages')) { STORE.set('cardImages', {}); }
   if (!STORE.get('cardCategories')) { STORE.set('cardCategories', []); }
   if (!STORE.get('goldCardCategories')) { STORE.set('goldCardCategories', []); }
+  // Migrate old bulk cardImages to individual IMG_STORE entries
+  const legacyImages = STORE.get('cardImages');
+  if (legacyImages && typeof legacyImages === 'object') {
+    Object.keys(legacyImages).forEach(catId => {
+      if (!IMG_STORE.get(catId) && legacyImages[catId]) {
+        IMG_STORE.set(catId, legacyImages[catId]);
+      }
+    });
+    localStorage.removeItem('ibl_v5_cardImages');
+  }
 }
 
 // ══════════════════════════════════════
@@ -1161,7 +1202,6 @@ function giveFromGoldDisplay() {
 function renderGoldCardDisplay(cardTypeId) {
   const ct = getCardTypeInfo(cardTypeId);
   const goldCategories = (STORE.get('goldCardCategories') || []).filter(c => c.cardTypeId === cardTypeId && c.teamId === currentUser.team);
-  const cardImages = STORE.get('cardImages') || {};
   const allCards = STORE.get('cards') || [];
   const CARDS_PER_CATEGORY = 3;
 
@@ -1198,7 +1238,7 @@ function renderGoldCardDisplay(cardTypeId) {
 
   let givenIndex = 0;
   goldCategories.forEach(cat => {
-    const images = cardImages[cat.id] || {};
+    const images = IMG_STORE.get(cat.id) || {};
     gridHtml += `<div class="category-section"><h3>${cat.name}</h3><div class="category-cards-row">`;
     for (let i = 0; i < CARDS_PER_CATEGORY; i++) {
       if (givenIndex < givenForType.length) {
@@ -1381,12 +1421,11 @@ async function addGoldCardCategory() {
     goldCategories.push({ id: newId, teamId, cardTypeId, name });
     STORE.set('goldCardCategories', goldCategories);
 
-    // Save images
-    const cardImages = STORE.get('cardImages') || {};
-    cardImages[newId] = {};
-    if (frontInput.files && frontInput.files[0]) cardImages[newId].front = await readFileAsDataURL(frontInput.files[0]);
-    if (backInput.files && backInput.files[0]) cardImages[newId].back = await readFileAsDataURL(backInput.files[0]);
-    STORE.set('cardImages', cardImages);
+    // Save images individually
+    const imgObj = {};
+    if (frontInput.files && frontInput.files[0]) imgObj.front = await readFileAsDataURL(frontInput.files[0]);
+    if (backInput.files && backInput.files[0]) imgObj.back = await readFileAsDataURL(backInput.files[0]);
+    IMG_STORE.set(newId, imgObj);
 
     document.getElementById('new-gold-cat-name').value = '';
     frontInput.value = ''; backInput.value = '';
@@ -1403,27 +1442,23 @@ function deleteGoldCardCategory(id) {
     if (!confirm('Remove this gold card category?')) return;
     const cats = (STORE.get('goldCardCategories') || []).filter(c => c.id !== id);
     STORE.set('goldCardCategories', cats);
-    const cardImages = STORE.get('cardImages') || {};
-    delete cardImages[id];
-    STORE.set('cardImages', cardImages);
+    IMG_STORE.remove(id);
     renderAdminGoldCardCategories();
 }
 
 async function updateGoldCategoryImages(catId) {
     const frontInput = document.getElementById('gcat-front-' + catId);
     const backInput = document.getElementById('gcat-back-' + catId);
-    const cardImages = STORE.get('cardImages') || {};
-    if (!cardImages[catId]) cardImages[catId] = {};
-    if (frontInput && frontInput.files && frontInput.files[0]) cardImages[catId].front = await readFileAsDataURL(frontInput.files[0]);
-    if (backInput && backInput.files && backInput.files[0]) cardImages[catId].back = await readFileAsDataURL(backInput.files[0]);
-    STORE.set('cardImages', cardImages);
+    const imgObj = IMG_STORE.get(catId) || {};
+    if (frontInput && frontInput.files && frontInput.files[0]) imgObj.front = await readFileAsDataURL(frontInput.files[0]);
+    if (backInput && backInput.files && backInput.files[0]) imgObj.back = await readFileAsDataURL(backInput.files[0]);
+    IMG_STORE.set(catId, imgObj);
     renderAdminGoldCardCategories();
     alert('Gold card images updated!');
 }
 
 function renderAdminGoldCardCategories() {
     const goldCategories = STORE.get('goldCardCategories') || [];
-    const cardImages = STORE.get('cardImages') || {};
     const el = document.getElementById('admin-gold-card-categories-list');
     const emptyEl = document.getElementById('admin-gold-card-categories-empty');
 
@@ -1446,7 +1481,7 @@ function renderAdminGoldCardCategories() {
             const ct = getCardTypeInfo(cardTypeId);
             html += `<div class="gold-card-value-group"><h5>${ct.icon} ${ct.name}</h5>`;
             grouped[teamId][cardTypeId].forEach(cat => {
-                const imgs = cardImages[cat.id] || {};
+                const imgs = IMG_STORE.get(cat.id) || {};
                 const frontThumb = imgs.front ? `<img src="${imgs.front}" style="width:36px;height:50px;object-fit:cover;border-radius:4px">` : '<span style="font-size:10px;color:var(--muted)">No img</span>';
                 const backThumb = imgs.back ? `<img src="${imgs.back}" style="width:36px;height:50px;object-fit:cover;border-radius:4px">` : '<span style="font-size:10px;color:var(--muted)">No img</span>';
                 html += `
@@ -1522,15 +1557,18 @@ function deleteCardType(id) {
   const cardTypes = (STORE.get('cardTypes') || []).filter(ct => ct.id !== id);
   STORE.set('cardTypes', cardTypes);
   // Clean up categories and their images
-  const categories = (STORE.get('cardCategories') || []).filter(c => c.cardTypeId !== id);
+  const allCategories = STORE.get('cardCategories') || [];
+  const removedCats = allCategories.filter(c => c.cardTypeId === id);
+  const categories = allCategories.filter(c => c.cardTypeId !== id);
   STORE.set('cardCategories', categories);
-  const cardImages = STORE.get('cardImages') || {};
-  delete cardImages[id];
-  // Also delete category images that belonged to this type
-  Object.keys(cardImages).forEach(k => {
-    if (!categories.find(c => c.id === k)) delete cardImages[k];
-  });
-  STORE.set('cardImages', cardImages);
+  // Remove images for deleted categories
+  removedCats.forEach(c => IMG_STORE.remove(c.id));
+  // Also remove gold card categories for this type
+  const allGoldCats = STORE.get('goldCardCategories') || [];
+  const removedGoldCats = allGoldCats.filter(c => c.cardTypeId === id);
+  const goldCategories = allGoldCats.filter(c => c.cardTypeId !== id);
+  STORE.set('goldCardCategories', goldCategories);
+  removedGoldCats.forEach(c => IMG_STORE.remove(c.id));
   renderAdminCardTypes();
   renderGoldCardManagementForm();
   renderAdminCardCategories();
@@ -1625,16 +1663,11 @@ async function addCardCategory() {
   categories.push({ id: newId, cardTypeId, name });
   STORE.set('cardCategories', categories);
 
-  // Save images
-  const cardImages = STORE.get('cardImages') || {};
-  cardImages[newId] = {};
-  if (frontInput.files && frontInput.files[0]) {
-    cardImages[newId].front = await readFileAsDataURL(frontInput.files[0]);
-  }
-  if (backInput.files && backInput.files[0]) {
-    cardImages[newId].back = await readFileAsDataURL(backInput.files[0]);
-  }
-  STORE.set('cardImages', cardImages);
+  // Save images individually
+  const imgObj = {};
+  if (frontInput.files && frontInput.files[0]) imgObj.front = await readFileAsDataURL(frontInput.files[0]);
+  if (backInput.files && backInput.files[0]) imgObj.back = await readFileAsDataURL(backInput.files[0]);
+  IMG_STORE.set(newId, imgObj);
 
   document.getElementById('new-cat-name').value = '';
   frontInput.value = '';
@@ -1652,9 +1685,7 @@ function deleteCardCategory(id) {
   if (!confirm('Remove this card category?')) return;
   const categories = (STORE.get('cardCategories') || []).filter(c => c.id !== id);
   STORE.set('cardCategories', categories);
-  const cardImages = STORE.get('cardImages') || {};
-  delete cardImages[id];
-  STORE.set('cardImages', cardImages);
+  IMG_STORE.remove(id);
   renderAdminCardCategories();
   renderAdminCardTypes();
 }
@@ -1662,22 +1693,16 @@ function deleteCardCategory(id) {
 async function updateCategoryImages(catId) {
   const frontInput = document.getElementById('cat-front-' + catId);
   const backInput = document.getElementById('cat-back-' + catId);
-  const cardImages = STORE.get('cardImages') || {};
-  if (!cardImages[catId]) cardImages[catId] = {};
-  if (frontInput && frontInput.files && frontInput.files[0]) {
-    cardImages[catId].front = await readFileAsDataURL(frontInput.files[0]);
-  }
-  if (backInput && backInput.files && backInput.files[0]) {
-    cardImages[catId].back = await readFileAsDataURL(backInput.files[0]);
-  }
-  STORE.set('cardImages', cardImages);
+  const imgObj = IMG_STORE.get(catId) || {};
+  if (frontInput && frontInput.files && frontInput.files[0]) imgObj.front = await readFileAsDataURL(frontInput.files[0]);
+  if (backInput && backInput.files && backInput.files[0]) imgObj.back = await readFileAsDataURL(backInput.files[0]);
+  IMG_STORE.set(catId, imgObj);
   renderAdminCardCategories();
   alert('Images updated!');
 }
 
 function renderAdminCardCategories() {
   const categories = STORE.get('cardCategories') || [];
-  const cardImages = STORE.get('cardImages') || {};
   const el = document.getElementById('admin-card-categories-list');
   const emptyEl = document.getElementById('admin-card-categories-empty');
 
@@ -1701,7 +1726,7 @@ function renderAdminCardCategories() {
     html += `<div class="gold-card-team-group">`;
     html += `<h4>${ct.icon} ${ct.name}</h4>`;
     grouped[typeId].forEach(cat => {
-      const imgs = cardImages[cat.id] || {};
+      const imgs = IMG_STORE.get(cat.id) || {};
       const frontThumb = imgs.front ? `<img src="${imgs.front}" style="width:36px;height:50px;object-fit:cover;border-radius:4px">` : '<span style="font-size:10px;color:var(--muted)">No img</span>';
       const backThumb = imgs.back ? `<img src="${imgs.back}" style="width:36px;height:50px;object-fit:cover;border-radius:4px">` : '<span style="font-size:10px;color:var(--muted)">No img</span>';
       html += `
@@ -1747,7 +1772,6 @@ function giveFromDisplay() {
 function renderCardDisplay(cardTypeId) {
   const ct = getCardTypeInfo(cardTypeId);
   const categories = (STORE.get('cardCategories') || []).filter(c => c.cardTypeId === cardTypeId);
-  const cardImages = STORE.get('cardImages') || {};
   const allCards = STORE.get('cards') || [];
   const CARDS_PER_CATEGORY = 3;
 
@@ -1793,14 +1817,13 @@ function renderCardDisplay(cardTypeId) {
   let givenIndex = 0;
 
   categories.forEach(cat => {
-    const images = cardImages[cat.id] || {};
+    const images = IMG_STORE.get(cat.id) || {};
     gridHtml += `<div class="category-section">`;
     gridHtml += `<h3>${cat.name}</h3>`;
     gridHtml += `<div class="category-cards-row">`;
 
     for (let i = 0; i < CARDS_PER_CATEGORY; i++) {
       if (givenIndex < givenForType.length) {
-        // This card has been given
         const c = givenForType[givenIndex];
         const recipient = getUserById(c.toId);
         gridHtml += buildFlipCardHtml(images, cat.name, true, recipient, c.ts);
@@ -1873,7 +1896,7 @@ function buildFlipCardHtml(images, label, isGiven, recipient, ts) {
   // If this is the first ever load, push all defaults to Firebase
   if (!loaded) {
     loadingMsg.textContent = 'Setting up database...';
-    const keys = ['users','cardTypes','cards','goldCardBehaviors','cardImages','cardCategories','goldCardCategories'];
+    const keys = ['users','cardTypes','cards','goldCardBehaviors','cardCategories','goldCardCategories'];
     const pushPromises = keys.map(key => {
       const val = STORE.get(key);
       if (val !== null) return db.ref('appData/' + key).set(val).catch(err => console.error('Push error for ' + key + ':', err));
