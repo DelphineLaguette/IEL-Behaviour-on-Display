@@ -834,6 +834,12 @@ async function loadFromFirebase() {
       console.log('Firebase: app data loaded', Object.keys(data));
     }
 
+    // Clean up legacy bulk cardImages from appData to free quota
+    if (data && data.cardImages) {
+      db.ref('appData/cardImages').remove().catch(() => {});
+      console.log('Firebase: removed legacy bulk cardImages to free quota');
+    }
+
     // Load card images individually
     const imgSnapshot = await db.ref('cardImages').once('value');
     const imgData = imgSnapshot.val();
@@ -847,12 +853,15 @@ async function loadFromFirebase() {
     return !!(data);
   } catch (err) {
     console.error('Firebase read error:', err);
+    const hasLocalData = !!localStorage.getItem(STORE_PREFIX + 'users');
     const errDiv = document.createElement('div');
-    errDiv.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:#dc2626;color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;font-family:sans-serif';
-    errDiv.textContent = 'Firebase connection error: ' + err.message;
+    errDiv.style.cssText = 'position:fixed;top:10px;left:50%;transform:translateX(-50%);background:' + (hasLocalData ? '#f59e0b' : '#dc2626') + ';color:#fff;padding:12px 20px;border-radius:8px;font-size:13px;z-index:9999;font-family:sans-serif';
+    errDiv.textContent = hasLocalData
+      ? 'Firebase quota exceeded — using local data. New images will be compressed to save space.'
+      : 'Firebase connection error: ' + err.message;
     document.body.appendChild(errDiv);
     setTimeout(() => errDiv.remove(), 8000);
-    return false;
+    return hasLocalData;
   }
 }
 
@@ -1648,8 +1657,25 @@ function previewCardImage(input, previewId) {
 function readFileAsDataURL(file) {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
     reader.onerror = reject;
+    reader.onload = () => {
+      const img = new Image();
+      img.onload = () => {
+        const MAX_W = 400, MAX_H = 560;
+        let w = img.width, h = img.height;
+        if (w > MAX_W || h > MAX_H) {
+          const ratio = Math.min(MAX_W / w, MAX_H / h);
+          w = Math.round(w * ratio);
+          h = Math.round(h * ratio);
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = w; canvas.height = h;
+        canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+        resolve(canvas.toDataURL('image/jpeg', 0.7));
+      };
+      img.onerror = () => resolve(reader.result);
+      img.src = reader.result;
+    };
     reader.readAsDataURL(file);
   });
 }
