@@ -1084,7 +1084,7 @@ function renderTeamDashboard(teamId) {
         <div class="lb-row ${isMe ? 'me' : ''}">
           <div class="rank ${rc}">${i + 1}</div>
           <div class="avatar" style="background:${entry.user.color||'#0F2C61'};color:#ffffff">${entry.user.name.charAt(0).toUpperCase()}</div>
-          <div class="lb-name">${entry.user.name} ${isMe ? '<small>— You</small>' : ''}</div>
+          <div class="lb-name">${entry.user.name} ${isMe ? '<small>— You</small>' : ''}${entry.user.commitment ? `<div style="font-size:12px;font-style:italic;color:var(--muted);margin-top:2px;font-weight:400">${entry.user.name.split(' ')[0]}'s commitment to the team - ${entry.user.commitment}</div>` : ''}</div>
           <div class="lb-cards">
             ${typePills || goldPills || '<span style="font-size:12px;color:var(--muted)">No cards yet</span>'}
             ${(typePills && goldPills) ? '<br>' : ''}
@@ -1368,11 +1368,15 @@ function renderAdminUserList() {
     const team = TEAMS.find(t => t.id === u.team);
     const teamLabel = team ? `${team.icon} ${team.name}` : 'No team';
     return `
-    <div class="user-list-item">
+    <div class="user-list-item" style="flex-wrap:wrap">
       <div class="avatar" style="background:${u.color||'#0F2C61'};color:#ffffff;width:32px;height:32px;font-size:12px">${u.name.charAt(0).toUpperCase()}</div>
-      <div class="uname">${u.name}<br><span class="urole">${u.username} · ${teamLabel} · Pwd: ${u.password}</span></div>
+      <div class="uname" style="flex:1;min-width:140px">${u.name}<br><span class="urole">${u.username} · ${teamLabel} · Pwd: ${u.password}</span></div>
       <span class="badge ${u.role}">${u.role}</span>
       ${u.id !== currentUser.id ? `<button class="btn btn-danger btn-sm" onclick="deleteUser('${u.id}')">Remove</button>` : ''}
+      <div style="width:100%;margin-top:6px;display:flex;gap:6px;align-items:center">
+        <input type="text" id="commitment-${u.id}" value="${(u.commitment||'').replace(/"/g,'&quot;')}" placeholder="${u.name.split(' ')[0]}'s commitment to the team -" style="flex:1;font-size:12px;padding:6px 10px;border:1px solid var(--border);border-radius:6px;font-style:italic">
+        <button class="btn btn-secondary btn-sm" onclick="saveCommitment('${u.id}')" style="white-space:nowrap">Save</button>
+      </div>
     </div>`;
   }).join('');
 }
@@ -1533,6 +1537,18 @@ function deleteUser(id) {
   const users = (STORE.get('users') || []).filter(u => u.id !== id);
   STORE.set('users', users);
   renderAdminUserList();
+}
+
+function saveCommitment(userId) {
+  const input = document.getElementById('commitment-' + userId);
+  if (!input) return;
+  const users = STORE.get('users') || [];
+  const user = users.find(u => u.id === userId);
+  if (!user) return;
+  user.commitment = input.value.trim();
+  STORE.set('users', users);
+  input.style.borderColor = 'var(--accent)';
+  setTimeout(() => input.style.borderColor = 'var(--border)', 1500);
 }
 
 function addCardType() {
