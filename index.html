@@ -9,6 +9,7 @@
 <!-- Firebase SDK -->
 <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/12.11.0/firebase-storage-compat.js"></script>
 <style>
   :root {
     --bg: #f0f4f8;
@@ -782,6 +783,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.database();
+const storage = firebase.storage();
 
 // ══════════════════════════════════════
 // DATA STORE (localStorage + Firebase sync)
@@ -802,52 +804,89 @@ const STORE = {
   }
 };
 
-// Separate image storage — stores each image individually to avoid size limits
+// Convert a data URL to a Blob for uploading
+function dataURLtoBlob(dataUrl) {
+  const arr = dataUrl.split(',');
+  const mime = arr[0].match(/:(.*?);/)[1];
+  const bstr = atob(arr[1]);
+  let n = bstr.length;
+  const u8 = new Uint8Array(n);
+  while (n--) u8[n] = bstr.charCodeAt(n);
+  return new Blob([u8], { type: mime });
+}
+
+// Upload a single image to Firebase Storage and return its download URL
+async function uploadImageToStorage(catId, side, dataUrl) {
+  if (!dataUrl) return null;
+  // If it's already a URL (not a data URL), return as-is
+  if (!dataUrl.startsWith('data:')) return dataUrl;
+  const blob = dataURLtoBlob(dataUrl);
+  const ref = storage.ref('cardImages/' + catId + '/' + side + '.jpg');
+  const snapshot = await ref.put(blob);
+  return await snapshot.ref.getDownloadURL();
+}
+
+// Image storage — uploads to Firebase Storage, saves URLs in Realtime DB
 const IMG_STORE = {
   get(catId) {
     try { return JSON.parse(localStorage.getItem('ibl_img_' + catId)); } catch { return null; }
   },
-  set(catId, imgObj) {
+  async set(catId, imgObj) {
+    // Upload any data URLs to Storage and replace them with download URLs
+    const urlObj = {};
+    if (imgObj.front) urlObj.front = await uploadImageToStorage(catId, 'front', imgObj.front);
+    if (imgObj.back) urlObj.back = await uploadImageToStorage(catId, 'back', imgObj.back);
     try {
-      localStorage.setItem('ibl_img_' + catId, JSON.stringify(imgObj));
+      localStorage.setItem('ibl_img_' + catId, JSON.stringify(urlObj));
     } catch (e) {
       console.warn('localStorage img write error:', catId, e);
     }
-    db.ref('cardImages/' + catId).set(imgObj).catch(err => console.warn('Firebase img write error:', err));
+    db.ref('cardImages/' + catId).set(urlObj).catch(err => console.warn('Firebase img write error:', err));
+    return urlObj;
   },
   remove(catId) {
     localStorage.removeItem('ibl_img_' + catId);
     db.ref('cardImages/' + catId).remove().catch(() => {});
+    // Also delete files from Storage (best-effort)
+    storage.ref('cardImages/' + catId + '/front.jpg').delete().catch(() => {});
+    storage.ref('cardImages/' + catId + '/back.jpg').delete().catch(() => {});
   }
 };
 
 // Load all data from Firebase into localStorage
 async function loadFromFirebase() {
   try {
+    // One-time cleanup: free quota by wiping legacy base64 image data
+    // (v3 = images now in Firebase Storage, not Realtime DB)
+    const STORAGE_VERSION = 3;
+    const localVer = parseInt(localStorage.getItem('ibl_storage_version') || '0', 10);
+    if (localVer < STORAGE_VERSION) {
+      console.log('Running one-time cleanup of legacy image data from Firebase…');
+      await db.ref('appData/cardImages').remove().catch(() => {});
+      await db.ref('cardImages').remove().catch(() => {});
+      localStorage.setItem('ibl_storage_version', String(STORAGE_VERSION));
+      console.log('Legacy image data cleared.');
+    }
+
     // Load app data
     const snapshot = await db.ref('appData').once('value');
     const data = snapshot.val();
     if (data) {
       for (const key in data) {
+        if (key === 'cardImages') continue; // never load bulk image data
         localStorage.setItem(STORE_PREFIX + key, JSON.stringify(data[key]));
       }
       console.log('Firebase: app data loaded', Object.keys(data));
     }
 
-    // Clean up legacy bulk cardImages from appData to free quota
-    if (data && data.cardImages) {
-      db.ref('appData/cardImages').remove().catch(() => {});
-      console.log('Firebase: removed legacy bulk cardImages to free quota');
-    }
-
-    // Load card images individually
+    // Load card image URLs individually (now small — just https URLs, not base64)
     const imgSnapshot = await db.ref('cardImages').once('value');
     const imgData = imgSnapshot.val();
     if (imgData) {
       for (const catId in imgData) {
         localStorage.setItem('ibl_img_' + catId, JSON.stringify(imgData[catId]));
       }
-      console.log('Firebase: card images loaded', Object.keys(imgData).length, 'categories');
+      console.log('Firebase: card image URLs loaded', Object.keys(imgData).length, 'categories');
     }
 
     return !!(data);
@@ -912,15 +951,19 @@ function initData() {
   if (!STORE.get('goldCardBehaviors')) { STORE.set('goldCardBehaviors', []); }
   if (!STORE.get('cardCategories')) { STORE.set('cardCategories', []); }
   if (!STORE.get('goldCardCategories')) { STORE.set('goldCardCategories', []); }
-  // Migrate old bulk cardImages to individual IMG_STORE entries
-  const legacyImages = STORE.get('cardImages');
-  if (legacyImages && typeof legacyImages === 'object') {
-    Object.keys(legacyImages).forEach(catId => {
-      if (!IMG_STORE.get(catId) && legacyImages[catId]) {
-        IMG_STORE.set(catId, legacyImages[catId]);
-      }
-    });
-    localStorage.removeItem('ibl_v5_cardImages');
+  // Clean up legacy bulk cardImages (no migration — images now live in Firebase Storage)
+  localStorage.removeItem('ibl_v5_cardImages');
+  // Also drop old base64 data URLs from local IMG_STORE so the app will re-fetch URLs from Firebase
+  for (let i = localStorage.length - 1; i >= 0; i--) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith('ibl_img_')) {
+      try {
+        const v = JSON.parse(localStorage.getItem(k));
+        if (v && ((v.front && v.front.startsWith('data:')) || (v.back && v.back.startsWith('data:')))) {
+          localStorage.removeItem(k);
+        }
+      } catch {}
+    }
   }
 }
 
@@ -1459,7 +1502,7 @@ async function addGoldCardCategory() {
     const imgObj = {};
     if (frontInput.files && frontInput.files[0]) imgObj.front = await readFileAsDataURL(frontInput.files[0]);
     if (backInput.files && backInput.files[0]) imgObj.back = await readFileAsDataURL(backInput.files[0]);
-    IMG_STORE.set(newId, imgObj);
+    await IMG_STORE.set(newId, imgObj);
 
     document.getElementById('new-gold-cat-name').value = '';
     frontInput.value = ''; backInput.value = '';
@@ -1486,7 +1529,7 @@ async function updateGoldCategoryImages(catId) {
     const imgObj = IMG_STORE.get(catId) || {};
     if (frontInput && frontInput.files && frontInput.files[0]) imgObj.front = await readFileAsDataURL(frontInput.files[0]);
     if (backInput && backInput.files && backInput.files[0]) imgObj.back = await readFileAsDataURL(backInput.files[0]);
-    IMG_STORE.set(catId, imgObj);
+    await IMG_STORE.set(catId, imgObj);
     renderAdminGoldCardCategories();
     alert('Gold card images updated!');
 }
@@ -1730,7 +1773,7 @@ async function addCardCategory() {
   const imgObj = {};
   if (frontInput.files && frontInput.files[0]) imgObj.front = await readFileAsDataURL(frontInput.files[0]);
   if (backInput.files && backInput.files[0]) imgObj.back = await readFileAsDataURL(backInput.files[0]);
-  IMG_STORE.set(newId, imgObj);
+  await IMG_STORE.set(newId, imgObj);
 
   document.getElementById('new-cat-name').value = '';
   frontInput.value = '';
@@ -1759,7 +1802,7 @@ async function updateCategoryImages(catId) {
   const imgObj = IMG_STORE.get(catId) || {};
   if (frontInput && frontInput.files && frontInput.files[0]) imgObj.front = await readFileAsDataURL(frontInput.files[0]);
   if (backInput && backInput.files && backInput.files[0]) imgObj.back = await readFileAsDataURL(backInput.files[0]);
-  IMG_STORE.set(catId, imgObj);
+  await IMG_STORE.set(catId, imgObj);
   renderAdminCardCategories();
   alert('Images updated!');
 }
